@@ -33,6 +33,10 @@ const Home = () => {
     }
   }
 
+  const removeSelectedImage = () => {
+    setSelectedImage(null)
+  }
+
   return (
     <div className="flex justify-center items-center" 
          style={{ 
@@ -84,7 +88,15 @@ const Home = () => {
           {/* Simple Image Preview */}
           {selectedImage && (
             <div className="mt-6 text-center">
-              <h3 className="text-white text-lg font-bold mb-4">Selected Image</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-white text-lg font-bold">Selected Image</h3>
+                <button
+                  onClick={removeSelectedImage}
+                  className="bg-red-500/80 backdrop-blur-sm border border-white/20 text-white px-3 py-1 rounded-lg hover:bg-red-600/90 transition-all duration-200 text-sm"
+                >
+                  Remove
+                </button>
+              </div>
               <img
                 src={URL.createObjectURL(selectedImage)}
                 alt="Selected"
