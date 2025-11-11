@@ -1,8 +1,51 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import background from '../assets/background.jpg'
 
 const Login = () => {
+  const navigate = useNavigate()
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
+  const [errors, setErrors] = useState({})
+  const [loading, setLoading] = useState(false)
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    
+    // Basic validation
+    const newErrors = {}
+    if (!formData.email) newErrors.email = 'Email is required'
+    if (!formData.password) newErrors.password = 'Password is required'
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      setLoading(false)
+      return
+    }
+
+    try {
+      // API call will go here
+      console.log('Login data:', formData)
+      // For now, just navigate to dashboard on any input
+      navigate('/home')
+    } catch (error) {
+      console.error('Login error:', error)
+      setErrors({ general: 'Login failed. Please try again.' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen w-full flex justify-center items-center" 
          style={{ 
@@ -21,22 +64,34 @@ const Login = () => {
           <h2 className="text-[28px] font-bold text-white mb-6 text-center">
             Login
           </h2>
-          <form className="flex flex-col">
+          <form className="flex flex-col" onSubmit={handleSubmit}>
             <input
+              name="email"
               placeholder="Email"
               className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 mb-4 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
               type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
             />
+            {errors.email && <p className="text-red-400 text-sm mb-3">{errors.email}</p>}
+            
             <input
+              name="password"
               placeholder="Password"
               className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 mb-4 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
               type="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              required
             />
+            {errors.password && <p className="text-red-400 text-sm mb-3">{errors.password}</p>}
             <button
               className="bg-linear-to-r from-indigo-500/80 to-blue-500/80 backdrop-blur-sm text-white font-medium py-3 px-4 rounded-md hover:from-indigo-600/90 hover:to-blue-600/90 border border-white/20 transition-all duration-200 transform hover:scale-105"
               type="submit"
+              disabled={loading}
             >
-              Submit
+              {loading ? 'Signing In...' : 'Submit'}
             </button>
             <p className="text-white mt-4 text-center">
               Don't have an account?
