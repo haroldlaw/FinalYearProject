@@ -88,10 +88,10 @@ const Home = () => {
           ) : (
             <div className="text-center">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-white text-lg font-bold">Selected Image</h3>
+                <h3 className="text-lg font-bold bg-linear-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">Selected Image</h3>
                 <button
                   onClick={removeSelectedImage}
-                  className="bg-red-500/80 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-red-600/90 transition-all duration-200 text-sm font-medium"
+                  className="bg-linear-to-r from-red-400/80 to-red-600/80 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg hover:from-red-500/90 hover:to-red-700/90 transition-all duration-200 text-sm font-medium"
                 >
                   Delete
                 </button>
@@ -106,7 +106,7 @@ const Home = () => {
               </p>
               <button
                 onClick={() => {/* Add analyze functionality here */}}
-                className="mt-4 bg-green-500/80 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-green-600/90 transition-all duration-200 text-sm font-medium"
+                className="mt-4 bg-linear-to-r from-blue-400/80 to-green-400/80 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg hover:from-blue-500/90 hover:to-green-500/90 transition-all duration-200 text-sm font-medium"
               >
                 Analyze Image
               </button>

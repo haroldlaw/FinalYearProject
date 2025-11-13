@@ -5,8 +5,7 @@ import background from '../assets/background.jpg'
 const SignUp = () => {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    username: '',
     email: '',
     confirmEmail: '',
     password: '',
@@ -29,40 +28,66 @@ const SignUp = () => {
     }
   }
 
-  const validateForm = () => {
-    const newErrors = {}
+const validateForm = () => {
+  const newErrors = {}
 
-    // Required fields validation
-    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required'
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required'
-    if (!formData.email.trim()) newErrors.email = 'Email is required'
-    if (!formData.confirmEmail.trim()) newErrors.confirmEmail = 'Please confirm your email'
-    if (!formData.password) newErrors.password = 'Password is required'
-    if (!formData.confirmPassword) newErrors.confirmPassword = 'Please confirm your password'
+  // Username validation 
+  const nameRegex = /^[a-zA-Z\s'-]+$/
+  if (!formData.username.trim()) {
+    newErrors.username = 'Username is required'
+  } else if (!nameRegex.test(formData.username.trim())) {
+    newErrors.username = 'Username cannot contain numbers or special characters'
+  } 
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (formData.email && !emailRegex.test(formData.email)) {
+  // Email validation 
+  if (!formData.email.trim()) {
+    newErrors.email = 'Email is required'
+  } else {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!emailRegex.test(formData.email.trim())) {
       newErrors.email = 'Please enter a valid email address'
     }
-
-    // Email match validation
-    if (formData.email && formData.confirmEmail && formData.email !== formData.confirmEmail) {
-      newErrors.confirmEmail = 'Email does not match'
-    }
-
-    // Password validation
-    if (formData.password && formData.password.length < 6) {
-      newErrors.password = 'Password must have at least 6 characters'
-    }
-
-    // Password match validation
-    if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Password does not match'
-    }
-
-    return newErrors
   }
+
+  // Email confirmation validation
+  if (!formData.confirmEmail.trim()) {
+    newErrors.confirmEmail = 'Please confirm your email'
+  } else if (formData.email.trim() && formData.confirmEmail.trim() && formData.email.trim() !== formData.confirmEmail.trim()) {
+    newErrors.confirmEmail = 'Email does not match'
+  }
+
+  // Password validation 
+  if (!formData.password) {
+    newErrors.password = 'Password is required'
+  } else if (formData.password.length < 8) {
+    newErrors.password = 'Password must have at least 8 characters'
+  } else {
+    // Additional password strength requirements
+    const hasUpperCase = /[A-Z]/.test(formData.password)
+    const hasLowerCase = /[a-z]/.test(formData.password)
+    const hasNumbers = /\d/.test(formData.password)
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
+
+    if (!hasUpperCase) {
+      newErrors.password = 'Password must contain at least one uppercase letter'
+    } else if (!hasLowerCase) {
+      newErrors.password = 'Password must contain at least one lowercase letter'
+    } else if (!hasNumbers) {
+      newErrors.password = 'Password must contain at least one number'
+    } else if (!hasSpecialChar) {
+      newErrors.password = 'Password must contain at least one special character'
+    }
+  }
+
+  // Password confirmation validation
+  if (!formData.confirmPassword) {
+    newErrors.confirmPassword = 'Please confirm your password'
+  } else if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+    newErrors.confirmPassword = 'Password does not match'
+  }
+
+  return newErrors
+}
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -119,32 +144,16 @@ const SignUp = () => {
               </div>
             )}
             
-            <div className="flex space-x-4 mb-4">
-              <div className="w-1/2">
-                <input
-                  name="firstName"
-                  placeholder="First Name"
-                  className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 w-full focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
-                  type="text"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.firstName && <p className="text-red-400 text-sm mt-1">{errors.firstName}</p>}
-              </div>
-              <div className="w-1/2">
-                <input
-                  name="lastName"
-                  placeholder="Last Name"
-                  className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 w-full focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
-                  type="text"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.lastName && <p className="text-red-400 text-sm mt-1">{errors.lastName}</p>}
-              </div>
-            </div>
+            <input
+              name="username"
+              placeholder="Username"
+              className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 mb-4 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
+              type="text"
+              value={formData.username}
+              onChange={handleInputChange}
+              required
+            />
+            {errors.username && <p className="text-red-400 text-sm mb-3 -mt-3">{errors.username}</p>}
             
             <input
               name="email"

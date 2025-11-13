@@ -36,7 +36,7 @@ const Login = () => {
     try {
       // API call will go here
       console.log('Login data:', formData)
-      // For now, just navigate to dashboard on any input
+      // For now, just navigate to home on any input
       navigate('/home')
     } catch (error) {
       console.error('Login error:', error)
