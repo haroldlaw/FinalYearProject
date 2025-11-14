@@ -28,8 +28,7 @@ const userSchema = new mongoose.Schema({
         return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v)
       },
       message: 'Please enter a valid email address'
-    },
-    index: true
+    }
   },
   password: {
     type: String,
@@ -90,10 +89,6 @@ const userSchema = new mongoose.Schema({
     }
   }
 })
-
-// Indexes for performance
-userSchema.index({ email: 1 })
-userSchema.index({ createdAt: 1 })
 
 // Virtual for account lock status
 userSchema.virtual('isLocked').get(function() {
