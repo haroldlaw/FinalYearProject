@@ -65,13 +65,13 @@ router.post('/login', async (req, res) => {
     // Find user by email
     const user = await User.findByEmail(email)
     if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password' })
+      return res.status(400).json({ error: 'Invalid email or password' })
     }
 
     // Compare password
     const isMatch = await user.comparePassword(password)
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid email or password' })
+      return res.status(400).json({ error: 'Invalid email or password' })
     }
 
     console.log('User logged in:', user.email)

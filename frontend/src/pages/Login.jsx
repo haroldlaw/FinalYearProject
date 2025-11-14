@@ -125,6 +125,13 @@ const Login = () => {
             {errors.password && (
               <p className="text-red-400 text-sm mb-3">{errors.password}</p>
             )}
+            
+            {errors.general && (
+              <div className="bg-red-500/20 border border-red-400/30 rounded-md p-3 mb-4">
+                <p className="text-red-300 text-sm">{errors.general}</p>
+              </div>
+            )}
+            
             <button
               className="bg-linear-to-r from-indigo-500/80 to-blue-500/80 backdrop-blur-sm text-white font-medium py-3 px-4 rounded-md hover:from-indigo-600/90 hover:to-blue-600/90 border border-white/20 transition-all duration-200 transform hover:scale-105"
               type="submit"

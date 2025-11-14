@@ -29,7 +29,7 @@ const apiCall = async (endpoint, options = {}) => {
     console.log(`Response data:`, data)
 
     if (!response.ok) {
-      throw new Error(data.message || 'API call failed')
+      throw new Error(data.error || data.message || 'API call failed')
     }
 
     return { success: true, data }
