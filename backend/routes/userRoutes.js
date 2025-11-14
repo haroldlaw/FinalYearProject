@@ -57,4 +57,55 @@ router.post('/signup', async (req, res) => {
   }
 })
 
+// authenticate user
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    // Find user by email
+    const user = await User.findByEmail(email)
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid email or password' })
+    }
+
+    // Compare password
+    const isMatch = await user.comparePassword(password)
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid email or password' })
+    }
+
+    console.log('User logged in:', user.email)
+
+    // Create JWT payload
+    const payload = {
+      userId: user._id,
+      email: user.email,
+      username: user.username
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' } // Token expires in 24 hours
+    )
+
+    console.log('JWT token generated for user:', user.email)
+
+    res.status(200).json({ 
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.createdAt
+      }
+    })
+  } catch (error) {
+    console.error('Error logging in user:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
 module.exports = router
