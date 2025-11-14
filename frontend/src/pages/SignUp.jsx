@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"
 import background from '../assets/background.jpg'
+import { authAPI } from '../services/api'
 
 const SignUp = () => {
   const navigate = useNavigate()
@@ -15,12 +16,15 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false)
 
   const handleInputChange = (e) => {
+    console.log(`Input changed: ${e.target.name} = "${e.target.value}"`)
+
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     })
     // Clear specific field error when user starts typing
     if (errors[e.target.name]) {
+      console.log(`Clearing error for field: ${e.target.name}`)
       setErrors({
         ...errors,
         [e.target.name]: ''
@@ -37,7 +41,9 @@ const validateForm = () => {
     newErrors.username = 'Username is required'
   } else if (!nameRegex.test(formData.username.trim())) {
     newErrors.username = 'Username cannot contain numbers or special characters'
-  } 
+  } else if (formData.username.trim().length < 2) {
+      newErrors.username = 'Username must have at least 2 characters'
+  }
 
   // Email validation 
   if (!formData.email.trim()) {
@@ -91,32 +97,66 @@ const validateForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    console.log('Form submission started')
+    console.log('Form data:', formData)
+
     setLoading(true)
     setErrors({})
 
     // Validate form
     const formErrors = validateForm()
     if (Object.keys(formErrors).length > 0) {
+      console.error('Validation failed:')
+      console.error('Validation errors:', formErrors)
       setErrors(formErrors)
       setLoading(false)
       return
     }
 
+    console.log('Validation passed')
+
+    // Prepare data for API
+    const apiData = {
+      username: formData.username.trim(),
+      email: formData.email.trim(),
+      password: formData.password
+    }
+
     try {
-      // API call will go here - for now just simulate
-      console.log('SignUp data:', formData)
+      console.log('📡 Starting API call...')
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // Show success message and navigate to login
-      alert('Account created successfully! Please log in.')
-      navigate('/login')
+      // Call signup API
+      const result = await authAPI.signup(apiData)
+
+      if (result.success) {
+        console.log('Account created successfully')
+        console.log('User data:', result.data.user)
+
+        // Store token and user info
+        localStorage.setItem('token', result.data.token)
+        localStorage.setItem('user', JSON.stringify(result.data.user))
+
+        // Show success message
+        alert('Account created successfully! Redirecting to login...')
+
+        // Redirect to login or home
+        navigate('/login')
+        } else {
+        console.error('Signup failed:', result.error)
+        setErrors({ general: result.error })
+      }
     } catch (error) {
-      console.error('SignUp error:', error)
-      setErrors({ general: 'Failed to create account. Please try again.' })
+      console.error('SignUp error occurred:')
+      console.error('Error object:', error)
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+      
+      setErrors({ 
+        general: 'Network error. Please check your connection and try again.' 
+      })
     } finally {
       setLoading(false)
+      console.log('🔄 Form submission completed')
     }
   }
   return (
