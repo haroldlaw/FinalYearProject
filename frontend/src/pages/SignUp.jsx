@@ -1,177 +1,192 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from "react-router-dom"
-import background from '../assets/background.jpg'
-import { authAPI } from '../services/api'
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import background from "../assets/background.jpg";
+import { authAPI } from "../services/api";
 
 const SignUp = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    confirmEmail: '',
-    password: '',
-    confirmPassword: ''
-  })
-  const [errors, setErrors] = useState({})
-  const [loading, setLoading] = useState(false)
+    username: "",
+    email: "",
+    confirmEmail: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
-    console.log(`Input changed: ${e.target.name} = "${e.target.value}"`)
+    console.log(`Input changed: ${e.target.name} = "${e.target.value}"`);
 
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
-    })
+      [e.target.name]: e.target.value,
+    });
     // Clear specific field error when user starts typing
     if (errors[e.target.name]) {
-      console.log(`Clearing error for field: ${e.target.name}`)
+      console.log(`Clearing error for field: ${e.target.name}`);
       setErrors({
         ...errors,
-        [e.target.name]: ''
-      })
+        [e.target.name]: "",
+      });
     }
-  }
+  };
 
-const validateForm = () => {
-  const newErrors = {}
+  const validateForm = () => {
+    const newErrors = {};
 
-  // Username validation 
-  const nameRegex = /^[a-zA-Z\s'-]+$/
-  if (!formData.username.trim()) {
-    newErrors.username = 'Username is required'
-  } else if (!nameRegex.test(formData.username.trim())) {
-    newErrors.username = 'Username cannot contain numbers or special characters'
-  } else if (formData.username.trim().length < 2) {
-      newErrors.username = 'Username must have at least 2 characters'
-  }
-
-  // Email validation 
-  if (!formData.email.trim()) {
-    newErrors.email = 'Email is required'
-  } else {
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-    if (!emailRegex.test(formData.email.trim())) {
-      newErrors.email = 'Please enter a valid email address'
+    // Username validation
+    const nameRegex = /^[a-zA-Z\s'-]+$/;
+    if (!formData.username.trim()) {
+      newErrors.username = "Username is required";
+    } else if (!nameRegex.test(formData.username.trim())) {
+      newErrors.username =
+        "Username cannot contain numbers or special characters";
+    } else if (formData.username.trim().length < 2) {
+      newErrors.username = "Username must have at least 2 characters";
     }
-  }
 
-  // Email confirmation validation
-  if (!formData.confirmEmail.trim()) {
-    newErrors.confirmEmail = 'Please confirm your email'
-  } else if (formData.email.trim() && formData.confirmEmail.trim() && formData.email.trim() !== formData.confirmEmail.trim()) {
-    newErrors.confirmEmail = 'Email does not match'
-  }
-
-  // Password validation 
-  if (!formData.password) {
-    newErrors.password = 'Password is required'
-  } else if (formData.password.length < 8) {
-    newErrors.password = 'Password must have at least 8 characters'
-  } else {
-    // Additional password strength requirements
-    const hasUpperCase = /[A-Z]/.test(formData.password)
-    const hasLowerCase = /[a-z]/.test(formData.password)
-    const hasNumbers = /\d/.test(formData.password)
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
-
-    if (!hasUpperCase) {
-      newErrors.password = 'Password must contain at least one uppercase letter'
-    } else if (!hasLowerCase) {
-      newErrors.password = 'Password must contain at least one lowercase letter'
-    } else if (!hasNumbers) {
-      newErrors.password = 'Password must contain at least one number'
-    } else if (!hasSpecialChar) {
-      newErrors.password = 'Password must contain at least one special character'
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        newErrors.email = "Please enter a valid email address";
+      }
     }
-  }
 
-  // Password confirmation validation
-  if (!formData.confirmPassword) {
-    newErrors.confirmPassword = 'Please confirm your password'
-  } else if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
-    newErrors.confirmPassword = 'Password does not match'
-  }
+    // Email confirmation validation
+    if (!formData.confirmEmail.trim()) {
+      newErrors.confirmEmail = "Please confirm your email";
+    } else if (
+      formData.email.trim() &&
+      formData.confirmEmail.trim() &&
+      formData.email.trim() !== formData.confirmEmail.trim()
+    ) {
+      newErrors.confirmEmail = "Email does not match";
+    }
 
-  return newErrors
-}
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must have at least 8 characters";
+    } else {
+      // Additional password strength requirements
+      const hasUpperCase = /[A-Z]/.test(formData.password);
+      const hasLowerCase = /[a-z]/.test(formData.password);
+      const hasNumbers = /\d/.test(formData.password);
+      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password);
+
+      if (!hasUpperCase) {
+        newErrors.password =
+          "Password must contain at least one uppercase letter";
+      } else if (!hasLowerCase) {
+        newErrors.password =
+          "Password must contain at least one lowercase letter";
+      } else if (!hasNumbers) {
+        newErrors.password = "Password must contain at least one number";
+      } else if (!hasSpecialChar) {
+        newErrors.password =
+          "Password must contain at least one special character";
+      }
+    }
+
+    // Password confirmation validation
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (
+      formData.password &&
+      formData.confirmPassword &&
+      formData.password !== formData.confirmPassword
+    ) {
+      newErrors.confirmPassword = "Password does not match";
+    }
+
+    return newErrors;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    console.log('Form submission started')
-    console.log('Form data:', formData)
+    e.preventDefault();
+    console.log("Form submission started");
+    console.log("Form data:", formData);
 
-    setLoading(true)
-    setErrors({})
+    setLoading(true);
+    setErrors({});
 
     // Validate form
-    const formErrors = validateForm()
+    const formErrors = validateForm();
     if (Object.keys(formErrors).length > 0) {
-      console.error('Validation failed:')
-      console.error('Validation errors:', formErrors)
-      setErrors(formErrors)
-      setLoading(false)
-      return
+      console.error("Validation failed:");
+      console.error("Validation errors:", formErrors);
+      setErrors(formErrors);
+      setLoading(false);
+      return;
     }
 
-    console.log('Validation passed')
+    console.log("Validation passed");
 
     // Prepare data for API
     const apiData = {
       username: formData.username.trim(),
       email: formData.email.trim(),
-      password: formData.password
-    }
+      password: formData.password,
+    };
 
     try {
-      console.log('📡 Starting API call...')
-      
+      console.log("Starting API call...");
+
       // Call signup API
-      const result = await authAPI.signup(apiData)
+      const result = await authAPI.signup(apiData);
 
       if (result.success) {
-        console.log('Account created successfully')
-        console.log('User data:', result.data.user)
+        console.log("Account created successfully");
+        console.log("User data:", result.data.user);
 
         // Store token and user info
-        localStorage.setItem('token', result.data.token)
-        localStorage.setItem('user', JSON.stringify(result.data.user))
+        localStorage.setItem("token", result.data.token);
+        localStorage.setItem("user", JSON.stringify(result.data.user));
 
         // Show success message
-        alert('Account created successfully! Redirecting to login...')
+        alert("Account created successfully! Redirecting to login...");
 
         // Redirect to login or home
-        navigate('/login')
-        } else {
-        console.error('Signup failed:', result.error)
-        setErrors({ general: result.error })
+        navigate("/login");
+      } else {
+        console.error("Signup failed:", result.error);
+        setErrors({ general: result.error });
       }
     } catch (error) {
-      console.error('SignUp error occurred:')
-      console.error('Error object:', error)
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
-      
-      setErrors({ 
-        general: 'Network error. Please check your connection and try again.' 
-      })
+      console.error("SignUp error occurred:");
+      console.error("Error object:", error);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+
+      setErrors({
+        general: "Network error. Please check your connection and try again.",
+      });
     } finally {
-      setLoading(false)
-      console.log('🔄 Form submission completed')
+      setLoading(false);
+      console.log("Form submission completed");
     }
-  }
+  };
+
   return (
-    <div className="flex justify-center items-center" 
-         style={{ 
-           position: 'fixed',
-           top: 0,
-           left: 0,
-           width: '100vw',
-           height: '100vh',
-           backgroundImage: `url(${background})`,
-           backgroundSize: 'cover',
-           backgroundPosition: 'center',
-           backgroundRepeat: 'no-repeat'
-         }}>
+    <div
+      className="flex justify-center items-center"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundImage: `url(${background})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       <div className="flex flex-col items-center justify-center">
         <div className="w-full max-w-md bg-black/30 backdrop-blur-md rounded-xl shadow-2xl border border-white/20 py-8 px-8">
           <h2 className="text-[28px] font-bold text-white mb-6 text-center">
@@ -183,7 +198,7 @@ const validateForm = () => {
                 <p className="text-red-300 text-sm">{errors.general}</p>
               </div>
             )}
-            
+
             <input
               name="username"
               placeholder="Username"
@@ -193,8 +208,12 @@ const validateForm = () => {
               onChange={handleInputChange}
               required
             />
-            {errors.username && <p className="text-red-400 text-sm mb-3 -mt-3">{errors.username}</p>}
-            
+            {errors.username && (
+              <p className="text-red-400 text-sm mb-3 -mt-3">
+                {errors.username}
+              </p>
+            )}
+
             <input
               name="email"
               placeholder="Email"
@@ -204,8 +223,10 @@ const validateForm = () => {
               onChange={handleInputChange}
               required
             />
-            {errors.email && <p className="text-red-400 text-sm mb-3 -mt-3">{errors.email}</p>}
-            
+            {errors.email && (
+              <p className="text-red-400 text-sm mb-3 -mt-3">{errors.email}</p>
+            )}
+
             <input
               name="confirmEmail"
               placeholder="Confirm Email"
@@ -215,8 +236,12 @@ const validateForm = () => {
               onChange={handleInputChange}
               required
             />
-            {errors.confirmEmail && <p className="text-red-400 text-sm mb-3 -mt-3">{errors.confirmEmail}</p>}
-            
+            {errors.confirmEmail && (
+              <p className="text-red-400 text-sm mb-3 -mt-3">
+                {errors.confirmEmail}
+              </p>
+            )}
+
             <input
               name="password"
               placeholder="Password"
@@ -226,8 +251,12 @@ const validateForm = () => {
               onChange={handleInputChange}
               required
             />
-            {errors.password && <p className="text-red-400 text-sm mb-3 -mt-3">{errors.password}</p>}
-            
+            {errors.password && (
+              <p className="text-red-400 text-sm mb-3 -mt-3">
+                {errors.password}
+              </p>
+            )}
+
             <input
               name="confirmPassword"
               placeholder="Confirm Password"
@@ -237,7 +266,11 @@ const validateForm = () => {
               onChange={handleInputChange}
               required
             />
-            {errors.confirmPassword && <p className="text-red-400 text-sm mb-3 -mt-3">{errors.confirmPassword}</p>}
+            {errors.confirmPassword && (
+              <p className="text-red-400 text-sm mb-3 -mt-3">
+                {errors.confirmPassword}
+              </p>
+            )}
             <button
               className="bg-linear-to-r from-indigo-500/80 to-blue-500/80 backdrop-blur-sm text-white font-medium py-3 px-4 rounded-md hover:from-indigo-600/90 hover:to-blue-600/90 border border-white/20 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               type="submit"
@@ -249,13 +282,13 @@ const validateForm = () => {
                   Creating Account...
                 </>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </button>
             <p className="text-white mt-4 text-center">
               Already have an account?
-              <Link 
-                className="text-blue-400 hover:underline mt-4 px-1 ml-1" 
+              <Link
+                className="text-blue-400 hover:underline mt-4 px-1 ml-1"
                 to="/login"
               >
                 Login
@@ -266,6 +299,6 @@ const validateForm = () => {
       </div>
     </div>
   );
-}
+};
 
-export default SignUp
+export default SignUp;
