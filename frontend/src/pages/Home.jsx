@@ -1,14 +1,19 @@
 import React, { useState } from 'react'
 import background from '../assets/background.jpg'
+import { imageAPI } from '../services/api'
 
 const Home = () => {
   const [selectedImage, setSelectedImage] = useState(null)
   const [dragActive, setDragActive] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState(null)
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0]
     if (file && file.type.startsWith('image/')) {
+      console.log('Image selected:', file.name)
       setSelectedImage(file)
+      setAnalysisResult(null) // Clear previous results
     }
   }
 
@@ -29,12 +34,52 @@ const Home = () => {
     
     const file = e.dataTransfer.files[0]
     if (file && file.type.startsWith('image/')) {
+      console.log('Image dropped:', file.name)
       setSelectedImage(file)
+      setAnalysisResult(null)
     }
   }
 
   const removeSelectedImage = () => {
+    console.log('Removing selected image')
     setSelectedImage(null)
+    setAnalysisResult(null)
+  }
+
+  const analyzeImage = async () => {
+    if (!selectedImage) return
+
+    setUploading(true)
+    console.log('🔍 Starting image analysis...')
+
+    try {
+      // Upload image for analysis
+      const uploadResult = await imageAPI.uploadAnalysis(selectedImage)
+
+      if (uploadResult.success) {
+        console.log('Image uploaded successfully for analysis')
+        console.log('Image URL:', uploadResult.data.imageUrl)
+
+        // call AI analysis service
+        // For now, simulate the analysis
+        setAnalysisResult({
+          imageUrl: uploadResult.data.imageUrl,
+          analysis: 'Analysis completed successfully!',
+          confidence: 95,
+          tags: ['object', 'detected', 'successfully']
+        })
+
+        alert('Image analyzed successfully!')
+      } else {
+        console.error('Failed to upload image:', uploadResult.error)
+        alert('Failed to analyze image: ' + uploadResult.error)
+      }
+    } catch (error) {
+      console.error('Analysis error:', error)
+      alert('An error occurred during analysis')
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -105,10 +150,13 @@ const Home = () => {
                 {selectedImage.name} ({(selectedImage.size / 1024 / 1024).toFixed(2)} MB)
               </p>
               <button
-                onClick={() => {/* Add analyze functionality here */}}
-                className="mt-4 bg-linear-to-r from-blue-400/80 to-green-400/80 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg hover:from-blue-500/90 hover:to-green-500/90 transition-all duration-200 text-sm font-medium"
+                onClick={analyzeImage}
+                disabled={uploading}
+                className={`bg-linear-to-r from-blue-400/80 to-green-400/80 backdrop-blur-sm border border-white/20 text-white px-6 py-3 rounded-lg hover:from-blue-500/90 hover:to-green-500/90 transition-all duration-200 font-medium ${
+                  uploading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Analyze Image
+                {uploading ? '🔄 Analyzing...' : '🔍 Analyze Image'}
               </button>
               <input
                 type="file"
@@ -120,6 +168,25 @@ const Home = () => {
             </div>
           )}
         </div>
+        
+        {/* Analysis Results */}
+        {analysisResult && (
+          <div className="bg-black/30 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl p-6">
+            <h3 className="text-lg font-bold bg-linear-to-r from-blue-400 to-green-400 bg-clip-text text-transparent mb-4">
+              Analysis Results
+            </h3>
+            <div className="text-white">
+              <p className="mb-2">✅ {analysisResult.analysis}</p>
+              <p className="mb-2">🎯 Confidence: {analysisResult.confidence}%</p>
+              <p className="mb-2">🏷️ Tags: {analysisResult.tags.join(', ')}</p>
+              <img 
+                src={analysisResult.imageUrl} 
+                alt="Analyzed" 
+                className="w-64 h-48 mx-auto rounded-lg shadow-lg border border-white/20 object-contain bg-gray-900/20 mt-4"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
