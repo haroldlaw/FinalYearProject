@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
 
 // API routes
 app.use('/api/users', userRoutes);
-app.use('/api/images', imageRoutes)
+app.use('/api/images', imageRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is listening on http://localhost:${PORT}`);
