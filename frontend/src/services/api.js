@@ -39,6 +39,46 @@ const apiCall = async (endpoint, options = {}) => {
   }
 }
 
+// File upload helper function
+const uploadFile = async (endpoint, file, fieldName = 'image') => {
+  const url = `${API_BASE_URL}${endpoint}`
+  
+  const formData = new FormData()
+  formData.append(fieldName, file)
+
+  const token = localStorage.getItem('token')
+  const headers = {}
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  try {
+    console.log(`Uploading file to: ${url}`)
+    console.log(`File name: ${file.name}`)
+    console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)} MB`)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData,
+    })
+
+    const data = await response.json()
+
+    console.log(`Upload response status: ${response.status}`)
+    console.log(`Upload response data:`, data)
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Upload failed')
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error(`Upload Error for ${endpoint}:`, error)
+    return { success: false, error: error.message }
+  }
+}
+
 // Auth API functions
 export const authAPI = {
   // Sign up user
@@ -64,6 +104,14 @@ export const authAPI = {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     console.log('User logged out')
+  }
+}
+
+// Image API functions
+export const imageAPI = {
+  // Upload image for analysis
+  uploadAnalysis: async (imageFile) => {
+    return await uploadFile('/images/upload', imageFile, 'analysisImage')
   }
 }
 
