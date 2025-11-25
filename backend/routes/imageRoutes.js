@@ -92,7 +92,7 @@ router.post("/upload", upload.single("analysisImage"), async (req, res) => {
 
     // Handle specific Cloudinary errors
     if (error.http_code) {
-      console.error("- Cloudinary HTTP code:", error.http_code);
+      console.error("Cloudinary HTTP code:", error.http_code);
       return res.status(500).json({
         error: "Cloudinary upload failed",
         details: error.message,
