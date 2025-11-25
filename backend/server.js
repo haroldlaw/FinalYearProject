@@ -3,13 +3,12 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const path = require('path')
+const cookieParser = require('cookie-parser')
 const connectDB = require('./config/db')
 const userRoutes = require('./routes/userRoutes')
 const imageRoutes = require('./routes/imageRoutes')
 
 const app = express()
-
-console.log('Starting server...')
 
 // Simple CORS configuration
 app.use(cors({
@@ -27,13 +26,14 @@ app.use(cors({
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+app.use(cookieParser())
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 // Request logging
 app.use((req, res, next) => {
-  console.log(`📡 ${req.method} ${req.url}`)
+  console.log(`${req.method} ${req.url}`)
   next()
 })
 

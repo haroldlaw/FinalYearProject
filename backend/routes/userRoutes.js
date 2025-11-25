@@ -1,21 +1,21 @@
 const express = require('express')
-const User = require('../models/User')
 const jwt = require('jsonwebtoken')
+const User = require('../models/User')
 
 const router = express.Router()
 
-// register new user
+// sign up
 router.post('/signup', async (req, res) => {
   try {
     const { username, email, password } = req.body
 
-    // Check if user already exists
+    // Check if user exists
     const existingUser = await User.findByEmail(email)
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' })
     }
 
-    // Create new user
+    // create user
     const newUser = new User({ 
       username, 
       email: email.toLowerCase(), 
@@ -36,10 +36,16 @@ router.post('/signup', async (req, res) => {
     const token = jwt.sign(
       payload,
       process.env.JWT_SECRET,
-      { expiresIn: '24h' } // Token expires in 24 hours
+      { expiresIn: '7d' } // Token expires in 7 days
     )
 
-    console.log('JWT token generated for user:', newUser.email)
+    // Set HTTP-only cookie
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
 
     res.status(201).json({ 
       message: 'User registered successfully',
@@ -87,10 +93,16 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       payload,
       process.env.JWT_SECRET,
-      { expiresIn: '24h' } // Token expires in 24 hours
+      { expiresIn: '7d' } // Token expires in 7 days
     )
 
-    console.log('JWT token generated for user:', user.email)
+    // Set HTTP-only cookie
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
 
     res.status(200).json({ 
       message: 'Login successful',
@@ -108,6 +120,27 @@ router.post('/login', async (req, res) => {
   }
 })
 
-// get user profile
+// Logout
+router.post('/logout', (req, res) => {
+  res.clearCookie('auth_token');
+  res.json({ message: 'Logged out successfully' });
+});
+
+// Middleware to authenticate token from cookie
+function authenticateToken(req, res, next) {
+  const token = req.cookies.auth_token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access denied. No token provided.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.userId;
+    next();
+  } catch (error) {
+    res.status(403).json({ error: 'Invalid token' });
+  }
+}
 
 module.exports = router
