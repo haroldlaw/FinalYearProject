@@ -117,7 +117,6 @@ const Result = () => {
             <h1 className="text-3xl font-bold bg-linear-to-r from-blue-400 to-green-400 bg-clip-text text-transparent text-center">
               Analysis Result
             </h1>
-            <div></div> {/* Spacer for center alignment */}
           </div>
         </div>
 
