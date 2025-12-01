@@ -94,7 +94,9 @@ const Home = () => {
             <h2 className="text-2xl font-bold text-white mb-3 bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text">
               Analyzing Image...
             </h2>
-            <p className="text-white/90 text-lg">Please wait while your image is being analyzed</p>
+            <p className="text-white/90 text-lg">
+              Please wait while your image is being analyzed
+            </p>
           </div>
         </div>
       </div>
@@ -112,6 +114,18 @@ const Home = () => {
         backgroundAttachment: "fixed",
       }}
     >
+      {/* Profile Button */}
+      <div className="fixed top-8 left-8 z-20">
+        <div className="bg-black/60 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-4 shadow-2xl hover:shadow-blue-500/30 transition-all duration-500">
+          <button
+            onClick={() => navigate("/profile")}
+            className="bg-linear-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent font-bold hover:scale-105 transition-all duration-300"
+          >
+            👤
+          </button>
+        </div>
+      </div>
+
       <div className="w-full max-w-4xl mx-auto px-6 py-6 min-h-full flex flex-col justify-center">
         {/* Header */}
         <div className="bg-black/60 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-6 mb-8 shadow-2xl hover:shadow-blue-500/30 transition-all duration-500">
@@ -176,7 +190,7 @@ const Home = () => {
                   alt="Selected"
                   className="w-full max-w-md h-64 mx-auto rounded-2xl shadow-2xl border-2 border-white/40 object-contain bg-gray-900/40 hover:shadow-green-500/20 transition-all duration-300"
                 />
-                
+
                 {/* Image Info */}
                 <div className="mt-5 text-white/90 text-base space-y-2 bg-gray-900/30 backdrop-blur-md rounded-2xl p-4 border border-white/20">
                   <p className="flex items-center justify-center">
@@ -204,7 +218,9 @@ const Home = () => {
               {/* Select Different Image */}
               <div className="mt-6">
                 <button
-                  onClick={() => document.getElementById("imageUpload2").click()}
+                  onClick={() =>
+                    document.getElementById("imageUpload2").click()
+                  }
                   className="bg-linear-to-r from-blue-500/90 to-green-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-10 py-4 rounded-2xl hover:from-blue-600/90 hover:to-green-600/90 transition-all duration-300 font-bold text-xl shadow-xl hover:shadow-green-500/30 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   Select Different Image

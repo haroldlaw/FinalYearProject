@@ -110,8 +110,18 @@ export const imageAPI = {
     return await apiCall(`/images/${imageId}`, { method: "GET" });
   },
 
-  // Delete image
-  deleteImage: async (imageId) => {
-    return await apiCall(`/images/${imageId}`, { method: "DELETE" });
+  getUserHistory: async () => {
+    // Implement API call to get user's upload history
+    const response = await fetch('/api/user/history');
+    return response.json();
   },
+
+  // Delete image
+ deleteImage: async (imageId) => {
+    // Implement API call to delete image
+    const response = await fetch(`/api/images/${imageId}`, {
+      method: 'DELETE'
+    });
+    return response.json();
+  }
 };
