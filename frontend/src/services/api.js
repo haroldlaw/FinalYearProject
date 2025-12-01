@@ -91,6 +91,29 @@ export const authAPI = {
     console.log('User logged out')
     return result
   },
+
+  // Get current user
+  getCurrentUser: async () => {
+    return await apiCall('/users/me', { method: 'GET' })
+  },
+
+  // Get user upload history
+  getUserHistory: async () => {
+    return await apiCall('/users/history', { method: 'GET' })
+  },
+
+  // Update user profile
+  updateProfile: async (userData) => {
+    return await apiCall('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    })
+  },
+
+  // Delete user image
+  deleteUserImage: async (imageId) => {
+    return await apiCall(`/users/images/${imageId}`, { method: 'DELETE' })
+  }
 }
 
 // Image API functions

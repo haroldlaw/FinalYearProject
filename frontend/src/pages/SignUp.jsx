@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import background from "../assets/background.jpg";
-import { authAPI } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const { signup } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -138,7 +139,7 @@ const SignUp = () => {
       console.log("Starting API call...");
 
       // Call signup API
-      const result = await authAPI.signup(apiData);
+      const result = await signup(apiData);
 
       if (result.success) {
         console.log("Account created successfully");

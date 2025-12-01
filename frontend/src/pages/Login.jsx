@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import background from "../assets/background.jpg";
-import { authAPI } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -50,14 +52,14 @@ const Login = () => {
     try {
       console.log("Calling login API...");
 
-      const result = await authAPI.login({
+      const result = await login({
         email: formData.email.trim(),
         password: formData.password,
       });
 
       if (result.success) {
         console.log("Login successful");
-        console.log("User data:", result.data.user);
+        console.log("User data:", result.data);
 
         // Store token and user info
         localStorage.setItem("token", result.data.token);
