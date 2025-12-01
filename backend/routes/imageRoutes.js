@@ -16,7 +16,7 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
@@ -59,6 +59,82 @@ router.post("/upload", upload.single("analysisImage"), async (req, res) => {
 
     console.log("Image uploaded successfully");
 
+    // mock analysis result
+    const analysisResult = {
+      confidence: Math.floor(Math.random() * 30) + 70, // 70-100%
+      analysisDate: new Date(),
+      processingTime: Math.floor(Math.random() * 3000) + 1000, // Mock processing time
+
+      // Photography Analysis Aspects
+      composition: {
+        ruleOfThirds: ["Well Applied", "Partially Applied", "Not Applied"][
+          Math.floor(Math.random() * 3)
+        ],
+        balance: ["Balanced", "Slightly Unbalanced", "Well Balanced"][
+          Math.floor(Math.random() * 3)
+        ],
+        leadingLines: ["Present", "Strong", "Subtle", "Absent"][
+          Math.floor(Math.random() * 4)
+        ],
+        symmetry: ["Good", "Excellent", "Fair", "Poor"][
+          Math.floor(Math.random() * 4)
+        ],
+      },
+
+      focus: {
+        sharpness: ["Sharp", "Very Sharp", "Slightly Soft", "Soft"][
+          Math.floor(Math.random() * 4)
+        ],
+        depthOfField: ["Appropriate", "Shallow", "Deep", "Too Shallow"][
+          Math.floor(Math.random() * 4)
+        ],
+        focusPoint: ["Well Placed", "Centered", "Off-Center", "Poor"][
+          Math.floor(Math.random() * 4)
+        ],
+      },
+
+      exposure: {
+        level: [
+          "Perfectly Exposed",
+          "Slightly Overexposed",
+          "Slightly Underexposed",
+        ][Math.floor(Math.random() * 4)],
+        highlights: ["Preserved", "Blown Out", "Well Controlled", "Clipped"][
+          Math.floor(Math.random() * 4)
+        ],
+        shadows: ["Detailed", "Too Dark", "Well Lifted", "Crushed"][
+          Math.floor(Math.random() * 4)
+        ],
+        dynamicRange: ["Good", "Excellent", "Limited", "Wide"][
+          Math.floor(Math.random() * 4)
+        ],
+      },
+
+      color: {
+        whiteBalance: ["Too Warm", "Too Cool", "Natural"][
+          Math.floor(Math.random() * 4)
+        ],
+        contrast: ["High", "Low", "Balanced"][
+          Math.floor(Math.random() * 4)
+        ],
+      },
+
+      imageProperties: {
+        width: uploadResponse.width,
+        height: uploadResponse.height,
+        format: uploadResponse.format,
+        colorSpace: "sRGB",
+        quality: "auto-optimized",
+      },
+
+      recommendations: [
+        "Consider experimenting with different angles for more dynamic composition",
+        "Try adjusting exposure slightly to enhance detail in shadows",
+        "The current color balance works well for this subject matter",
+        "Focus point placement follows good photography principles",
+      ],
+    };
+
     // Save image data to MongoDB
     const imageData = new Image({
       originalName: req.file.originalname,
@@ -84,6 +160,7 @@ router.post("/upload", upload.single("analysisImage"), async (req, res) => {
         originalName: req.file.originalname,
         fileSize: req.file.size,
         uploadDate: savedImage.uploadDate,
+        analysisResult: analysisResult,
       },
     });
   } catch (error) {

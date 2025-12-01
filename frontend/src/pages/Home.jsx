@@ -1,130 +1,141 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import background from '../assets/background.jpg'
-import { imageAPI } from '../services/api'
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import background from "../assets/background.jpg";
+import { imageAPI } from "../services/api";
 
 const Home = () => {
-  const navigate = useNavigate()
-  const [selectedImage, setSelectedImage] = useState(null)
-  const [dragActive, setDragActive] = useState(false)
-  const [uploading, setUploading] = useState(false)
+  const navigate = useNavigate();
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const handleImageUpload = (e) => {
-    const file = e.target.files[0]
-    if (file && file.type.startsWith('image/')) {
-      console.log('Image selected:', file.name)
-      setSelectedImage(file)
+    const file = e.target.files[0];
+    if (file && file.type.startsWith("image/")) {
+      console.log("Image selected:", file.name);
+      setSelectedImage(file);
     }
-  }
+  };
 
   const handleDrag = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true)
+      setDragActive(true);
     } else if (e.type === "dragleave") {
-      setDragActive(false)
+      setDragActive(false);
     }
-  }
+  };
 
   const handleDrop = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-    
-    const file = e.dataTransfer.files[0]
-    if (file && file.type.startsWith('image/')) {
-      console.log('Image dropped:', file.name)
-      setSelectedImage(file)
-      setAnalysisResult(null)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) {
+      console.log("Image dropped:", file.name);
+      setSelectedImage(file);
     }
-  }
+  };
 
   const removeSelectedImage = () => {
-    console.log('Removing selected image')
-    setSelectedImage(null)
-    setAnalysisResult(null)
-  }
+    console.log("Removing selected image");
+    setSelectedImage(null);
+  };
 
   const analyzeImage = async () => {
-  if (!selectedImage) return
+    if (!selectedImage) return;
 
-  setUploading(true)
-  console.log('🔍 Starting image analysis...')
+    setUploading(true);
+    console.log("🔍 Starting image analysis...");
 
-  try {
-    // Upload image for analysis
-    const uploadResult = await imageAPI.uploadAnalysis(selectedImage)
+    try {
+      // Upload image for analysis
+      const uploadResult = await imageAPI.uploadAnalysis(selectedImage);
 
-    if (uploadResult.success) {
-      console.log('Image uploaded successfully for analysis')
-      console.log('Image URL:', uploadResult.data.imageUrl)
+      if (uploadResult.success) {
+        console.log("Image uploaded successfully for analysis");
+        console.log("Image URL:", uploadResult.data.imageUrl);
 
-      // Create mock analysis result (replace with real AI analysis later)
-      const mockAnalysisResult = {
-        ...uploadResult.data,
-        analysisResult: {
-          confidence: Math.floor(Math.random() * 30) + 70, // Random 70-100%
-          tags: ['object', 'image', 'analysis', selectedImage.type.split('/')[1]],
-          description: `The AI analysis has been completed successfully.`,
-          analysisDate: new Date().toISOString()
-        }
+        // Navigate to result page with the correct data
+        navigate("/result", {
+          state: {
+            analysisResult: uploadResult.data,
+          },
+        });
+      } else {
+        console.error("Failed to upload image:", uploadResult.error);
+        alert(`Failed to analyze image: ${uploadResult.error}`);
       }
-
-      // Navigate to result page
-      navigate('/result', {
-        state: {
-          analysisResult: mockAnalysisResult
-        }
-      })
-
-    } else {
-      console.error('Failed to upload image:', uploadResult.error)
-      alert(`Failed to analyze image: ${uploadResult.error}`)
+    } catch (error) {
+      console.error("Analysis error:", error);
+      alert("An error occurred during analysis: " + error.message);
+    } finally {
+      setUploading(false);
     }
-  } catch (error) {
-    console.error('Analysis error:', error)
-    alert('An error occurred during analysis: ' + error.message)
-  } finally {
-    setUploading(false)
+  };
+
+  if (uploading) {
+    return (
+      <div
+        className="fixed inset-0 flex justify-center items-center"
+        style={{
+          backgroundImage: `url(${background})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          backgroundAttachment: "fixed",
+        }}
+      >
+        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-10 hover:shadow-blue-500/30 transition-all duration-500 animate-pulse">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-20 w-20 border-4 border-blue-400/30 border-t-blue-400 mx-auto mb-6"></div>
+            <h2 className="text-2xl font-bold text-white mb-3 bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text">
+              Analyzing Image...
+            </h2>
+            <p className="text-white/90 text-lg">Please wait while your image is being analyzed</p>
+          </div>
+        </div>
+      </div>
+    );
   }
-}
 
   return (
-    <div className="flex justify-center items-center" 
-         style={{ 
-           position: 'fixed',
-           top: 0,
-           left: 0,
-           width: '100vw',
-           height: '100vh',
-           backgroundImage: `url(${background})`,
-           backgroundSize: 'cover',
-           backgroundPosition: 'center',
-           backgroundRepeat: 'no-repeat'
-         }}>
-      <div className="w-full max-w-2xl mx-auto p-6">
+    <div
+      className="fixed inset-0 overflow-auto"
+      style={{
+        backgroundImage: `url(${background})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+      }}
+    >
+      <div className="w-full max-w-4xl mx-auto px-6 py-6 min-h-full flex flex-col justify-center">
         {/* Header */}
-        <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 mb-6">
-          <h1 className="text-3xl font-bold bg-linear-to-r from-blue-400 to-green-400 bg-clip-text text-transparent text-center">
-            AI Image Analyzer
-          </h1>
+        <div className="bg-black/60 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-6 mb-8 shadow-2xl hover:shadow-blue-500/30 transition-all duration-500">
+          <div className="flex justify-center items-center">
+            <h1 className="text-4xl font-bold bg-linear-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent text-center">
+              ✨ AI Image Analyzer ✨
+            </h1>
+          </div>
         </div>
-        
+
         {/* Upload Section */}
-        <div className="bg-black/30 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl p-6">
+        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-8 hover:shadow-green-500/30 transition-all duration-500 hover:scale-[1.01]">
           {!selectedImage ? (
-            <div 
-              className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 cursor-pointer ${
-                dragActive 
-                  ? 'border-blue-400 bg-blue-500/20' 
-                  : 'border-white/40 hover:border-white/60 hover:bg-white/10'
+            <div
+              className={`border-3 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${
+                dragActive
+                  ? "border-blue-400/70 bg-blue-500/20 shadow-blue-500/30 shadow-xl"
+                  : "border-white/40 hover:border-white/70 hover:bg-white/10 hover:shadow-white/20 hover:shadow-lg"
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              onClick={() => document.getElementById('imageUpload').click()}
+              onClick={() => document.getElementById("imageUpload").click()}
             >
               <input
                 type="file"
@@ -133,52 +144,110 @@ const Home = () => {
                 className="hidden"
                 id="imageUpload"
               />
-              <div className="text-5xl mb-3">📁</div>
-              <p className="text-white text-lg font-medium mb-2">
+              <div className="text-8xl mb-6 animate-bounce">📁</div>
+              <h3 className="text-white text-2xl font-bold mb-3 bg-linear-to-r from-blue-300 to-green-300 bg-clip-text">
+                Upload Image
+              </h3>
+              <p className="text-white/90 text-lg font-medium mb-4">
                 Drag & drop an image here, or click to select
+              </p>
+              <p className="text-white/70 text-sm">
+                Supports JPG & PNG • Max 10MB
               </p>
             </div>
           ) : (
             <div className="text-center">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold bg-linear-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">Selected Image</h3>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold bg-linear-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">
+                  Selected Image
+                </h3>
                 <button
                   onClick={removeSelectedImage}
-                  className="bg-linear-to-r from-red-400/80 to-red-600/80 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg hover:from-red-500/90 hover:to-red-700/90 transition-all duration-200 text-sm font-medium"
+                  className="bg-linear-to-r from-red-500/90 to-red-600/90 backdrop-blur-sm border-2 border-white/30 text-white px-6 py-3 rounded-xl hover:from-red-600/90 hover:to-red-700/90 transition-all duration-300 font-semibold shadow-lg hover:shadow-red-500/30 hover:scale-105"
                 >
                   Delete
                 </button>
               </div>
-              <img
-                src={URL.createObjectURL(selectedImage)}
-                alt="Selected"
-                className="w-80 h-60 mx-auto rounded-lg shadow-lg border border-white/20 object-contain bg-gray-900/20"
-              />
-              <p className="text-white/80 mt-4">
-                {selectedImage.name} ({(selectedImage.size / 1024 / 1024).toFixed(2)} MB)
-              </p>
+
+              {/* Image Preview */}
+              <div className="bg-linear-to-r from-gray-900/60 to-gray-800/60 backdrop-blur-lg border-2 border-white/30 rounded-2xl p-6 shadow-xl hover:shadow-blue-500/20 transition-all duration-400 mb-6">
+                <img
+                  src={URL.createObjectURL(selectedImage)}
+                  alt="Selected"
+                  className="w-full max-w-md h-64 mx-auto rounded-2xl shadow-2xl border-2 border-white/40 object-contain bg-gray-900/40 hover:shadow-green-500/20 transition-all duration-300"
+                />
+                
+                {/* Image Info */}
+                <div className="mt-5 text-white/90 text-base space-y-2 bg-gray-900/30 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+                  <p className="flex items-center justify-center">
+                    <span className="font-semibold mr-2">📁 File:</span>
+                    <span className="text-blue-300">{selectedImage.name}</span>
+                  </p>
+                  <p className="flex items-center justify-center">
+                    <span className="font-semibold mr-2">📏 Size:</span>
+                    <span className="text-green-300">
+                      {(selectedImage.size / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Analyze Button */}
               <button
                 onClick={analyzeImage}
                 disabled={uploading}
-                className={`bg-linear-to-r from-blue-400/80 to-green-400/80 backdrop-blur-sm border border-white/20 text-white px-6 py-3 rounded-lg hover:from-blue-500/90 hover:to-green-500/90 transition-all duration-200 font-medium ${
-                  uploading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className="bg-linear-to-r from-blue-500/90 to-green-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-10 py-4 rounded-2xl hover:from-blue-600/90 hover:to-green-600/90 transition-all duration-300 font-bold text-xl shadow-xl hover:shadow-green-500/30 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                {uploading ? '🔄 Analyzing...' : '🔍 Analyze Image'}
+                {uploading ? "🔄 Analyzing..." : "🔍 Analyze Image"}
               </button>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="imageUpload"
-              />
+
+              {/* Select Different Image */}
+              <div className="mt-6">
+                <button
+                  onClick={() => document.getElementById("imageUpload2").click()}
+                  className="bg-linear-to-r from-blue-500/90 to-green-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-10 py-4 rounded-2xl hover:from-blue-600/90 hover:to-green-600/90 transition-all duration-300 font-bold text-xl shadow-xl hover:shadow-green-500/30 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  Select Different Image
+                </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="imageUpload2"
+                />
+              </div>
             </div>
           )}
-        </div>        
+        </div>
+
+        {/* Description */}
+        <div className="mt-8 bg-black/40 backdrop-blur-xl border-2 border-white/30 rounded-3xl p-6 shadow-xl hover:shadow-purple-500/20 transition-all duration-500">
+          <h3 className="text-xl font-bold text-white mb-4 text-center bg-linear-to-r from-purple-400 to-pink-400 bg-clip-text">
+            🚀 Analyzed Based On
+          </h3>
+          <div className="grid md:grid-cols-4 gap-4 text-sm">
+            <div className="text-center">
+              <div className="text-2xl mb-2">🎨</div>
+              <p className="text-white/90 font-medium">Composition</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl mb-2">🎯</div>
+              <p className="text-white/90 font-medium">Focus & Sharpness</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl mb-2">💡</div>
+              <p className="text-white/90 font-medium">Exposure</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl mb-2">🌈</div>
+              <p className="text-white/90 font-medium">Color & Contrast</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
