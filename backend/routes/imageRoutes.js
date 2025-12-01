@@ -1,6 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
+const jwt = require('jsonwebtoken');
 const Image = require("../models/Image");
 const router = express.Router();
 
@@ -10,6 +11,23 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// Middleware to authenticate token from cookie
+function authenticateToken(req, res, next) {
+  const token = req.cookies.auth_token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access denied. No token provided.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.userId;
+    next();
+  } catch (error) {
+    res.status(403).json({ error: 'Invalid token' });
+  }
+}
 
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
@@ -28,7 +46,7 @@ const upload = multer({
 });
 
 // Upload analysis image (for AI processing)
-router.post("/upload", upload.single("analysisImage"), async (req, res) => {
+router.post("/upload", authenticateToken, upload.single("analysisImage"), async (req, res) => {
   try {
     console.log("Uploading image");
 
@@ -137,6 +155,7 @@ router.post("/upload", upload.single("analysisImage"), async (req, res) => {
 
     // Save image data to MongoDB
     const imageData = new Image({
+      userId: req.userId, // Associate with authenticated user
       originalName: req.file.originalname,
       cloudinaryUrl: uploadResponse.secure_url,
       cloudinaryPublicId: uploadResponse.public_id,

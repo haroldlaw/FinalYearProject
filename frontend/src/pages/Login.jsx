@@ -58,13 +58,6 @@ const Login = () => {
       });
 
       if (result.success) {
-        console.log("Login successful");
-        console.log("User data:", result.data);
-
-        // Store token and user info
-        localStorage.setItem("token", result.data.token);
-        localStorage.setItem("user", JSON.stringify(result.data.user));
-
         // Redirect to home
         navigate("/home");
       } else {

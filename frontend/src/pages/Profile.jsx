@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import background from "../assets/background.jpg";
-import { imageAPI } from "../services/api";
+import { authAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const Profile = () => {
@@ -64,71 +64,40 @@ const Profile = () => {
     }
   }, [isAuthenticated, authUser]);
 
+  // Add a refresh interval to check for new uploads
+  useEffect(() => {
+    if (isAuthenticated) {
+      const interval = setInterval(() => {
+        fetchUploadHistory();
+      }, 30000); // Refresh every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
+
   const fetchUploadHistory = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log("Fetching user history...");
-      const response = await getUserHistory();
+      const response = await authAPI.getUserHistory();
 
-      if (response?.success) {
-        setUploadHistory(response.data || []);
-        console.log(
-          "Upload history loaded:",
-          response.data?.length || 0,
-          "items"
-        );
+      if (response?.success && response.data) {
+        const historyData = Array.isArray(response.data) ? response.data : [];
+        setUploadHistory(historyData);
       } else {
-        console.log("API not ready, using mock data");
-        setMockData();
+        setUploadHistory([]);
+        if (!response?.success) {
+          setError(response?.error || "Failed to fetch upload history");
+        }
       }
     } catch (err) {
-      console.error("Error fetching history:", err);
-      setError("Failed to load upload history");
-      setMockData(); // Fall back to mock data
+      console.error("Error fetching upload history:", err);
+      setError(`Failed to load upload history: ${err.message}`);
+      setUploadHistory([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  // Keep mock data as fallback for development
-  const setMockData = () => {
-    const mockHistory = [
-      {
-        id: 1,
-        imageUrl:
-          "https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=Sample+1",
-        originalName: "landscape.jpg",
-        uploadDate: "2024-12-01T10:30:00Z",
-        fileSize: 2.5 * 1024 * 1024, // 2.5MB
-        analysisScore: 85,
-        status: "completed",
-      },
-      {
-        id: 2,
-        imageUrl:
-          "https://via.placeholder.com/300x200/7ED321/FFFFFF?text=Sample+2",
-        originalName: "portrait.png",
-        uploadDate: "2024-11-28T15:45:00Z",
-        fileSize: 1.8 * 1024 * 1024, // 1.8MB
-        analysisScore: 92,
-        status: "completed",
-      },
-      {
-        id: 3,
-        imageUrl:
-          "https://via.placeholder.com/300x200/F5A623/FFFFFF?text=Sample+3",
-        originalName: "nature.jpg",
-        uploadDate: "2024-11-25T09:15:00Z",
-        fileSize: 3.2 * 1024 * 1024, // 3.2MB
-        analysisScore: 78,
-        status: "completed",
-      },
-    ];
-
-    setUploadHistory(mockHistory);
-    console.log("Using mock data");
   };
 
   const handleImageClick = (image) => {
@@ -142,14 +111,19 @@ const Profile = () => {
   const handleDeleteImage = async (imageId) => {
     if (window.confirm("Are you sure you want to delete this image?")) {
       try {
-        // Replace with actual API call
-        // await imageAPI.deleteImage(imageId);
-
-        setUploadHistory((prev) => prev.filter((img) => img.id !== imageId));
-        setSelectedImage(null);
+        const response = await authAPI.deleteUserImage(imageId);
+        
+        if (response?.success) {
+          setUploadHistory((prev) => prev.filter((img) => 
+            (img.id !== imageId) && (img._id !== imageId)
+          ));
+          setSelectedImage(null);
+        } else {
+          throw new Error(response?.error || "Failed to delete image");
+        }
       } catch (err) {
         console.error("Error deleting image:", err);
-        alert("Failed to delete image");
+        alert(`Failed to delete image: ${err.message}`);
       }
     }
   };
@@ -298,7 +272,7 @@ const Profile = () => {
                 {uploadHistory.length > 0
                   ? Math.round(
                       uploadHistory.reduce(
-                        (sum, img) => sum + img.analysisScore,
+                        (sum, img) => sum + (img.analysisScore || img.score || 0),
                         0
                       ) / uploadHistory.length
                     )
@@ -310,10 +284,23 @@ const Profile = () => {
 
         {/* Upload History */}
         <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-6 hover:shadow-green-500/30 transition-all duration-500">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-            <span className="text-3xl mr-3">📚</span>
-            Upload History ({uploadHistory.length})
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white flex items-center">
+              <span className="text-3xl mr-3">📚</span>
+              Upload History ({uploadHistory.length})
+            </h2>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  fetchUploadHistory();
+                }}
+                className="bg-linear-to-r from-purple-500/90 to-blue-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-4 py-2 rounded-xl hover:from-purple-600/90 hover:to-blue-600/90 transition-all duration-300 font-semibold shadow-lg hover:shadow-purple-500/30 hover:scale-105"
+                disabled={loading}
+              >
+                {loading ? "🔄" : "↻"} Refresh
+              </button>
+            </div>
+          </div>
 
           {error && (
             <div className="bg-red-500/20 border border-red-400/50 rounded-2xl p-4 mb-6">
@@ -331,7 +318,7 @@ const Profile = () => {
                 Start by uploading your first image!
               </p>
               <button
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/home")}
                 className="bg-linear-to-r from-blue-500/90 to-green-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-8 py-3 rounded-2xl hover:from-blue-600/90 hover:to-green-600/90 transition-all duration-300 font-semibold shadow-lg hover:shadow-green-500/30 hover:scale-105"
               >
                 🚀 Upload Now
@@ -339,52 +326,58 @@ const Profile = () => {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {uploadHistory.map((image) => (
-                <div
-                  key={image.id}
-                  className="bg-linear-to-r from-gray-900/60 to-gray-800/60 backdrop-blur-lg border-2 border-white/30 rounded-2xl p-4 shadow-xl hover:shadow-blue-500/20 transition-all duration-400 hover:scale-[1.02] cursor-pointer"
-                  onClick={() => handleImageClick(image)}
-                >
-                  <img
-                    src={image.imageUrl}
-                    alt={image.originalName}
-                    className="w-full h-48 object-cover rounded-xl mb-4 border border-white/20"
-                  />
+                {uploadHistory.map((image, index) => {
+                  return (
+                    <div
+                      key={image._id || image.id || index}
+                      className="bg-linear-to-r from-gray-900/60 to-gray-800/60 backdrop-blur-lg border-2 border-white/30 rounded-2xl p-4 shadow-xl hover:shadow-blue-500/20 transition-all duration-400 hover:scale-[1.02] cursor-pointer"
+                      onClick={() => handleImageClick(image)}
+                    >
+                      <img
+                        src={image.cloudinaryUrl || image.imageUrl || image.url || "https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=No+Image"}
+                        alt={image.originalName || image.filename || image.name || "Unknown"}
+                        className="w-full h-48 object-cover rounded-xl mb-4 border border-white/20"
+                        onError={(e) => {
+                          e.target.src = "https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=Image+Error";
+                        }}
+                      />
 
-                  <div className="space-y-2">
-                    <h4 className="text-white font-semibold truncate">
-                      {image.originalName}
-                    </h4>
+                      <div className="space-y-2">
+                        <h4 className="text-white font-semibold truncate">
+                          {image.originalName || image.filename || image.name || "Unknown File"}
+                        </h4>
 
-                    <div className="flex justify-between items-center">
-                      <span
-                        className={`text-2xl font-bold ${getScoreColor(
-                          image.analysisScore
-                        )}`}
-                      >
-                        {image.analysisScore}/100
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full border ${getScoreBadge(
-                          image.analysisScore
-                        )}`}
-                      >
-                        {image.analysisScore >= 85
-                          ? "Excellent"
-                          : image.analysisScore >= 70
-                          ? "Good"
-                          : "Fair"}
-                      </span>
+                        <div className="flex justify-between items-center">
+                          <span
+                            className={`text-2xl font-bold ${getScoreColor(
+                              image.analysisScore || image.score || 0
+                            )}`}
+                          >
+                            {image.analysisScore || image.score || 0}/100
+                          </span>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full border ${getScoreBadge(
+                              image.analysisScore || image.score || 0
+                            )}`}
+                          >
+                            {(image.analysisScore || image.score || 0) >= 85
+                              ? "Excellent"
+                              : (image.analysisScore || image.score || 0) >= 70
+                              ? "Good"
+                              : "Fair"}
+                          </span>
+                        </div>
+
+                        <div className="text-white/70 text-sm space-y-1">
+                          <p>📅 {formatDate(image.uploadDate || image.createdAt || new Date())}</p>
+                          <p>📏 {image.fileSize ? (image.fileSize / 1024 / 1024).toFixed(1) : "N/A"} MB</p>
+                          <p className="text-xs">ID: {image._id || image.id || "No ID"}</p>
+                        </div>
+                      </div>
                     </div>
-
-                    <div className="text-white/70 text-sm space-y-1">
-                      <p>📅 {formatDate(image.uploadDate)}</p>
-                      <p>📏 {(image.fileSize / 1024 / 1024).toFixed(1)} MB</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
           )}
         </div>
 
@@ -394,11 +387,11 @@ const Profile = () => {
             <div className="bg-black/70 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-6 max-w-4xl max-h-[90vh] overflow-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-2xl font-bold text-white">
-                  📷 {selectedImage.originalName}
+                  📷 {selectedImage.originalName || selectedImage.filename || selectedImage.name || "Unknown"}
                 </h3>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => handleDeleteImage(selectedImage.id)}
+                    onClick={() => handleDeleteImage(selectedImage.id || selectedImage._id)}
                     className="bg-linear-to-r from-red-500/90 to-red-600/90 backdrop-blur-sm border-2 border-white/30 text-white px-4 py-2 rounded-xl hover:from-red-600/90 hover:to-red-700/90 transition-all duration-300 font-semibold shadow-lg hover:shadow-red-500/30 hover:scale-105"
                   >
                     🗑️ Delete
@@ -415,9 +408,12 @@ const Profile = () => {
               <div className="grid lg:grid-cols-2 gap-6">
                 <div>
                   <img
-                    src={selectedImage.imageUrl}
-                    alt={selectedImage.originalName}
+                    src={selectedImage.cloudinaryUrl || selectedImage.imageUrl || selectedImage.url}
+                    alt={selectedImage.originalName || selectedImage.filename || selectedImage.name}
                     className="w-full h-auto rounded-2xl border-2 border-white/40 shadow-2xl"
+                    onError={(e) => {
+                      e.target.src = "https://via.placeholder.com/400x300/4A90E2/FFFFFF?text=Image+Not+Found";
+                    }}
                   />
                 </div>
 
@@ -430,19 +426,19 @@ const Profile = () => {
                     <div className="flex items-center space-x-3">
                       <span
                         className={`text-3xl font-bold ${getScoreColor(
-                          selectedImage.analysisScore
+                          selectedImage.analysisScore || selectedImage.score || 0
                         )}`}
                       >
-                        {selectedImage.analysisScore}/100
+                        {selectedImage.analysisScore || selectedImage.score || 0}/100
                       </span>
                       <span
                         className={`text-sm px-3 py-1 rounded-full border ${getScoreBadge(
-                          selectedImage.analysisScore
+                          selectedImage.analysisScore || selectedImage.score || 0
                         )}`}
                       >
-                        {selectedImage.analysisScore >= 85
+                        {(selectedImage.analysisScore || selectedImage.score || 0) >= 85
                           ? "Excellent"
-                          : selectedImage.analysisScore >= 70
+                          : (selectedImage.analysisScore || selectedImage.score || 0) >= 70
                           ? "Good"
                           : "Fair"}
                       </span>
@@ -457,20 +453,20 @@ const Profile = () => {
                     <div className="space-y-2 text-white/90">
                       <p>
                         <span className="font-semibold">📁 File:</span>{" "}
-                        {selectedImage.originalName}
+                        {selectedImage.originalName || selectedImage.filename || selectedImage.name || "Unknown"}
                       </p>
                       <p>
                         <span className="font-semibold">📏 Size:</span>{" "}
-                        {(selectedImage.fileSize / 1024 / 1024).toFixed(2)} MB
+                        {selectedImage.fileSize ? (selectedImage.fileSize / 1024 / 1024).toFixed(2) : "N/A"} MB
                       </p>
                       <p>
                         <span className="font-semibold">📅 Uploaded:</span>{" "}
-                        {formatDate(selectedImage.uploadDate)}
+                        {formatDate(selectedImage.uploadDate || selectedImage.createdAt || new Date())}
                       </p>
                       <p>
                         <span className="font-semibold">✅ Status:</span>{" "}
                         <span className="capitalize">
-                          {selectedImage.status}
+                          {selectedImage.status || "Completed"}
                         </span>
                       </p>
                     </div>

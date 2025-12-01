@@ -1,6 +1,11 @@
 const mongoose = require('mongoose')
 
 const imageSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   originalName: {
     type: String,
     required: true
@@ -29,12 +34,6 @@ const imageSchema = new mongoose.Schema({
     type: String,
     enum: ['cloudinary', 'local'],
     default: 'cloudinary'
-  },
-  analysisResult: {
-    confidence: Number,
-    tags: [String],
-    description: String,
-    analysisDate: Date
   }
 }, {
   timestamps: true
@@ -43,6 +42,7 @@ const imageSchema = new mongoose.Schema({
 // Index for performance
 imageSchema.index({ uploadDate: -1 })
 imageSchema.index({ cloudinaryPublicId: 1 })
+imageSchema.index({ userId: 1, uploadDate: -1 }) // For user-specific queries
 
 const Image = mongoose.model('Image', imageSchema)
 

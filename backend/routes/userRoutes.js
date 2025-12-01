@@ -48,13 +48,15 @@ router.post('/signup', async (req, res) => {
     });
 
     res.status(201).json({ 
+      success: true,
       message: 'User registered successfully',
-      token,
-      user: {
-        id: newUser._id,
-        username: newUser.username,
-        email: newUser.email,
-        createdAt: newUser.createdAt
+      data: {
+        user: {
+          id: newUser._id,
+          username: newUser.username,
+          email: newUser.email,
+          createdAt: newUser.createdAt
+        }
       }
     })
   } catch (error) {
@@ -105,13 +107,15 @@ router.post('/login', async (req, res) => {
     });
 
     res.status(200).json({ 
+      success: true,
       message: 'Login successful',
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        createdAt: user.createdAt
+      data: {
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          createdAt: user.createdAt
+        }
       }
     })
   } catch (error) {
@@ -123,7 +127,108 @@ router.post('/login', async (req, res) => {
 // Logout
 router.post('/logout', (req, res) => {
   res.clearCookie('auth_token');
-  res.json({ message: 'Logged out successfully' });
+  res.json({ 
+    success: true, 
+    message: 'Logged out successfully' 
+  });
+});
+
+// Get current user info
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get user upload history
+router.get('/history', authenticateToken, async (req, res) => {
+  try {
+    const Image = require('../models/Image');
+    
+    // First, try to find images for this user
+    let images = await Image.find({ userId: req.userId })
+      .sort({ createdAt: -1 })
+      .exec();
+    
+    // If no images found, check if there are orphaned images (without userId)
+    if (images.length === 0) {
+      const orphanedImages = await Image.find({ userId: { $exists: false } })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .exec();
+      
+      // For demo purposes, assign orphaned images to the current user
+      if (orphanedImages.length > 0) {
+        await Image.updateMany(
+          { userId: { $exists: false } },
+          { $set: { userId: req.userId } }
+        );
+        
+        // Fetch again after assignment
+        images = await Image.find({ userId: req.userId })
+          .sort({ createdAt: -1 })
+          .exec();
+      }
+    }
+    
+    res.json({
+      success: true,
+      data: images
+    });
+  } catch (error) {
+    console.error('Error fetching user history:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch upload history' 
+    });
+  }
+});
+
+// Delete user image
+router.delete('/images/:imageId', authenticateToken, async (req, res) => {
+  try {
+    const Image = require('../models/Image');
+    const image = await Image.findOne({ 
+      _id: req.params.imageId, 
+      userId: req.userId 
+    });
+
+    if (!image) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Image not found or you do not have permission to delete it' 
+      });
+    }
+
+    await Image.findByIdAndDelete(req.params.imageId);
+    
+    res.json({
+      success: true,
+      message: 'Image deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to delete image' 
+    });
+  }
 });
 
 // Middleware to authenticate token from cookie

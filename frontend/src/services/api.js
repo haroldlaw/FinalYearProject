@@ -13,18 +13,22 @@ const apiCall = async (endpoint, options = {}) => {
     ...options,
   };
   try {
-    console.log(`Making API call to: ${url}`);
-
     const response = await fetch(url, config);
+    
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const textResponse = await response.text();
+      throw new Error(`Server returned non-JSON response: ${textResponse}`);
+    }
+    
     const data = await response.json();
 
-    console.log(`Response status: ${response.status}`);
-    console.log(`Response data:`, data);
-
     if (!response.ok) {
-      throw new Error(data.error || data.message || "API call failed");
+      throw new Error(data.error || data.message || `HTTP ${response.status}`);
     }
-    return { success: true, data };
+    
+    return data;
   } catch (error) {
     console.error(`API Error for ${endpoint}:`, error);
     return { success: false, error: error.message };
@@ -39,22 +43,13 @@ const uploadFile = async (endpoint, file, fieldName = "analysisImage") => {
   formData.append(fieldName, file);
 
   try {
-    console.log(`Uploading file to: ${url}`);
-    console.log(`Field name: ${fieldName}`);
-    console.log(`File name: ${file.name}`);
-    console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-    console.log(`File type: ${file.type}`);
-
     const response = await fetch(url, {
       method: "POST",
       credentials: 'include', // Include cookies
       body: formData,
     });
 
-    console.log(`Upload response status: ${response.status}`);
-
     const data = await response.json();
-    console.log(`Upload response data:`, data);
 
     if (!response.ok) {
       throw new Error(data.error || data.message || "Upload failed");
@@ -88,7 +83,6 @@ export const authAPI = {
   // Logout user 
   logout: async () => {
     const result = await apiCall('/users/logout', { method: 'POST' })
-    console.log('User logged out')
     return result
   },
 
@@ -133,18 +127,8 @@ export const imageAPI = {
     return await apiCall(`/images/${imageId}`, { method: "GET" });
   },
 
-  getUserHistory: async () => {
-    // Implement API call to get user's upload history
-    const response = await fetch('/api/user/history');
-    return response.json();
-  },
-
   // Delete image
  deleteImage: async (imageId) => {
-    // Implement API call to delete image
-    const response = await fetch(`/api/images/${imageId}`, {
-      method: 'DELETE'
-    });
-    return response.json();
+    return await apiCall(`/images/${imageId}`, { method: 'DELETE' });
   }
 };
