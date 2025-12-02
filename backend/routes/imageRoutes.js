@@ -34,7 +34,7 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
@@ -199,56 +199,6 @@ router.post("/upload", authenticateToken, upload.single("analysisImage"), async 
 
     res.status(500).json({
       error: "Failed to upload image",
-      details: error.message,
-    });
-  }
-});
-
-// Get all uploaded images
-router.get("/list", async (req, res) => {
-  try {
-    console.log("Fetching all images");
-
-    const images = await Image.find().sort({ uploadDate: -1 }).limit(50); // Limit to last 50 images
-
-    console.log(`Found ${images.length} images`);
-
-    res.json({
-      success: true,
-      count: images.length,
-      images: images,
-    });
-  } catch (error) {
-    console.error("Error fetching images:", error);
-    res.status(500).json({
-      error: "Failed to fetch images",
-      details: error.message,
-    });
-  }
-});
-
-// Get specific image by ID
-router.get("/:id", async (req, res) => {
-  try {
-    console.log("Fetching image:", req.params.id);
-
-    const image = await Image.findById(req.params.id);
-
-    if (!image) {
-      console.log("Image not found");
-      return res.status(404).json({ error: "Image not found" });
-    }
-
-    console.log("Image found:", image.originalName);
-
-    res.json({
-      success: true,
-      image: image,
-    });
-  } catch (error) {
-    console.error("Error fetching image:", error);
-    res.status(500).json({
-      error: "Failed to fetch image",
       details: error.message,
     });
   }

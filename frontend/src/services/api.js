@@ -132,14 +132,4 @@ export const imageAPI = {
   uploadAnalysis: async (imageFile) => {
     return await uploadFile("/images/upload", imageFile, "analysisImage");
   },
-
-  // Get all images
-  getImages: async () => {
-    return await apiCall("/images/list", { method: "GET" });
-  },
-
-  // Get specific image
-  getImage: async (imageId) => {
-    return await apiCall(`/images/${imageId}`, { method: "GET" });
-  },
 };

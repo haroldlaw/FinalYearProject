@@ -49,7 +49,7 @@ const ForgotPassword = () => {
       const result = await authAPI.forgotPassword(email.trim());
       
       if (result.success) {
-        setMessage("Email found! Now create your new password.");
+        setMessage("Email found! Create your new password.");
         setStep(2);
       } else {
         setErrors({ email: result.error || "Email not found" });
@@ -141,135 +141,214 @@ const ForgotPassword = () => {
 
   return (
     <div
-      className="min-h-screen w-full flex justify-center items-center"
+      className="fixed inset-0 overflow-auto"
       style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
         backgroundImage: `url(${background})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
       }}
     >
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+      {/* Animated background overlay */}
+      <div className="fixed inset-0 bg-linear-to-br from-blue-900/30 via-purple-900/20 to-pink-900/30"></div>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-[1px]"></div>
+
+      {/* Floating particles animation */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/6 w-2 h-2 bg-blue-400/30 rounded-full animate-pulse delay-200"></div>
+        <div className="absolute top-3/4 right-1/6 w-1 h-1 bg-purple-400/40 rounded-full animate-bounce delay-1000"></div>
+        <div className="absolute bottom-1/4 left-2/6 w-3 h-3 bg-pink-400/20 rounded-full animate-ping delay-600"></div>
+        <div className="absolute top-1/3 right-2/6 w-2 h-2 bg-blue-400/25 rounded-full animate-pulse delay-400"></div>
+      </div>
       
-      <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="bg-black/60 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-8 shadow-2xl">
-          <h2 className="text-3xl font-bold text-white text-center mb-6">
-            {step === 1 && "Forgot Password"}
-            {step === 2 && "Create New Password"}
-            {step === 3 && "Success"}
-          </h2>
+      <div className="relative z-10 flex justify-center items-center min-h-screen py-8">
+        <div className="w-full max-w-md mx-4">
+          {/* Main Form Container */}
+          <div className="w-full bg-black/60 rounded-2xl shadow-2xl border border-white/30 p-6 transform hover:scale-[1.01] transition-all duration-300">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold mb-1 text-white">
+                {step === 1 && "🔑 Forgot Password"}
+                {step === 2 && "🔒 Create New Password"}
+                {step === 3 && ""}
+              </h2>
+              <p className="text-white/70 text-sm">
+                {step === 1 && "Enter email address to reset password"}
+                {step === 2 && "Choose a new password for your account"}
+                {step === 3 && ""}
+              </p>
+            </div>
 
           {step === 1 && (
-            <form className="flex flex-col" onSubmit={handleEmailSubmit}>
-              <p className="text-white/80 text-sm mb-4 text-center">
-                Enter your email to reset password
-              </p>
-              
-              <input
-                name="email"
-                placeholder="Email"
-                className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 mb-4 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
-                type="email"
-                value={email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                required
-              />
-              {errors.email && (
-                <p className="text-red-400 text-sm mb-3">{errors.email}</p>
-              )}
-
-              {message && (
-                <div className="bg-green-500/20 border border-green-400/30 rounded-md p-3 mb-4">
-                  <p className="text-green-300 text-sm">{message}</p>
+            <form className="space-y-4" onSubmit={handleEmailSubmit}>
+              {/* Email Input */}
+              <div className="space-y-1">
+                <label className="block text-white/80 text-xs font-semibold">
+                  Email Address
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                    <span className="text-white/70 text-lg">✉️</span>
+                  </div>
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-blue-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                    value={email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    required
+                  />
                 </div>
-              )}
+                {errors.email && (
+                  <p className="text-red-400 text-xs flex items-center">
+                    <span className="mr-1">❌</span>{errors.email}
+                  </p>
+                )}
+              </div>
 
+              {/* Continue Button */}
               <button
-                className="bg-linear-to-r from-indigo-500/80 to-blue-500/80 backdrop-blur-sm text-white font-medium py-3 px-4 rounded-md hover:from-indigo-600/90 hover:to-blue-600/90 border border-white/20 transition-all duration-200 transform hover:scale-105 mb-4"
+                className="custom-button w-full bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-xl border-0 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transform hover:scale-[1.01] hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
                 type="submit"
                 disabled={loading}
               >
-                {loading ? "Checking..." : "Continue"}
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white mr-2"></div>
+                    Checking email...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    Continue
+                  </span>
+                )}
               </button>
 
-              <Link
-                className="text-blue-400 hover:underline text-center"
-                to="/login"
-              >
-                Back to Login
-              </Link>
+              {/* Back to Login Link */}
+              <div className="text-center">
+                <Link
+                  className="text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-200 hover:underline text-xs"
+                  to="/login"
+                >
+                  ← Back to Login
+                </Link>
+              </div>
             </form>
           )}
 
           {step === 2 && (
-            <form className="flex flex-col" onSubmit={handlePasswordReset}>
-              <p className="text-white/80 text-sm mb-4 text-center">
-                Create a new password for <span className="text-blue-400">{email}</span>
-              </p>
-              
-              <input
-                name="newPassword"
-                placeholder="New Password"
-                className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 mb-4 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
-                type="password"
-                value={newPassword}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                required
-              />
-              {errors.password && (
-                <p className="text-red-400 text-sm mb-3">{errors.password}</p>
-              )}
+            <form className="space-y-4" onSubmit={handlePasswordReset}>
+              {/* Password Requirements Info */}
+              <div className="bg-blue-500/10 border border-blue-400/20 rounded-xl p-3 mb-4">
+                <p className="text-blue-300 text-xs font-medium mb-1">Password must contain:</p>
+                <div className="grid grid-cols-2 gap-1 text-xs text-blue-200">
+                  <div>• At least 8 characters</div>
+                  <div>• One uppercase letter</div>
+                  <div>• One lowercase letter</div>
+                  <div>• One special character</div>
+                </div>
+              </div>
 
-              <input
-                name="confirmPassword"
-                placeholder="Confirm New Password"
-                className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 mb-4 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                required
-              />
-              {errors.confirmPassword && (
-                <p className="text-red-400 text-sm mb-3">{errors.confirmPassword}</p>
-              )}
+              {/* New Password Input */}
+              <div className="space-y-1">
+                <label className="block text-white/80 text-xs font-semibold">
+                  New Password
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                    <span className="text-white/70 text-lg">🔒</span>
+                  </div>
+                  <input
+                    name="newPassword"
+                    type="password"
+                    placeholder="Enter new password"
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-green-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                    value={newPassword}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    required
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-red-400 text-xs flex items-center">
+                    <span className="mr-1">❌</span>{errors.password}
+                  </p>
+                )}
+              </div>
 
+              {/* Confirm Password Input */}
+              <div className="space-y-1">
+                <label className="block text-white/80 text-xs font-semibold">
+                  Confirm New Password
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                    <span className="text-white/70 text-lg">🔒</span>
+                  </div>
+                  <input
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="Confirm new password"
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-green-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                    value={confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    required
+                  />
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-red-400 text-xs flex items-center">
+                    <span className="mr-1">❌</span>{errors.confirmPassword}
+                  </p>
+                )}
+              </div>
+
+              {/* General Error Display */}
               {errors.general && (
-                <div className="bg-red-500/20 border border-red-400/30 rounded-md p-3 mb-4">
-                  <p className="text-red-300 text-sm">{errors.general}</p>
+                <div className="bg-red-500/20 border border-red-400/30 rounded-xl p-3">
+                  <div className="flex items-center">
+                    <span className="text-red-400 mr-2 text-sm">⚠️</span>
+                    <p className="text-red-300 text-xs font-medium">{errors.general}</p>
+                  </div>
                 </div>
               )}
 
+              {/* Update Password Button */}
               <button
-                className="bg-linear-to-r from-green-500/80 to-emerald-500/80 backdrop-blur-sm text-white font-medium py-3 px-4 rounded-md hover:from-green-600/90 hover:to-emerald-600/90 border border-white/20 transition-all duration-200 transform hover:scale-105 mb-4"
+                className="custom-button w-full bg-linear-to-r from-green-500 via-blue-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl border-0 hover:from-green-600 hover:via-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transform hover:scale-[1.01] hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
                 type="submit"
                 disabled={loading}
               >
-                {loading ? "Updating..." : "Update Password"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="text-blue-400 hover:underline text-center"
-              >
-                Back to Email
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white mr-2"></div>
+                    Updating password...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    Update Password
+                  </span>
+                )}
               </button>
             </form>
           )}
 
           {step === 3 && (
-            <div className="text-center">
-              <div className="bg-green-500/20 border border-green-400/30 rounded-md p-4 mb-6">
-                <p className="text-green-300">{message}</p>
-                <p className="text-white/80 text-sm mt-2">Redirecting to login...</p>
+            <div className="text-center space-y-4">
+              {/* Success Message */}
+              <p className="text-green-300 font-medium flex items-center justify-center">
+                <span className="mr-2">✅</span>{message}
+              </p>
+              <p className="text-white/80 text-sm">Redirecting to login page...</p>
+
+              {/* Loading Animation */}
+              <div className="flex justify-center items-center space-x-1">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce delay-0"></div>
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-150"></div>
+                <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce delay-300"></div>
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

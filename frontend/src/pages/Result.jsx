@@ -261,7 +261,7 @@ const Result = () => {
                 {/* Color */}
                 <div className="bg-linear-to-r from-gray-900/60 to-gray-800/60 backdrop-blur-lg border-2 border-white/30 rounded-2xl p-5 shadow-xl hover:shadow-pink-500/20 transition-all duration-400 hover:scale-[1.02]">
                   <h4 className="text-white font-bold mb-3 flex items-center text-base">
-                    <span className="text-xl mr-3">🌈</span>
+                    <span className="text-xl mr-3">🎨</span>
                     Color and Contrast
                   </h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -333,7 +333,6 @@ const Result = () => {
           </button>
         </div>
       </div>
-      <style jsx>{` .scrollbar-hidden { -ms-overflow-style: none; scrollbar-width: none; } .scrollbar-hidden::-webkit-scrollbar { display: none; } `}</style> 
     </div>
   );
 };

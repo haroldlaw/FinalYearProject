@@ -168,31 +168,9 @@ router.get('/history', authenticateToken, async (req, res) => {
   try {
     const Image = require('../models/Image');
     
-    // First, try to find images for this user
-    let images = await Image.find({ userId: req.userId })
+    const images = await Image.find({ userId: req.userId })
       .sort({ createdAt: -1 })
       .exec();
-    
-    // If no images found, check if there are orphaned images (without userId)
-    if (images.length === 0) {
-      const orphanedImages = await Image.find({ userId: { $exists: false } })
-        .sort({ createdAt: -1 })
-        .limit(10)
-        .exec();
-      
-      // For demo purposes, assign orphaned images to the current user
-      if (orphanedImages.length > 0) {
-        await Image.updateMany(
-          { userId: { $exists: false } },
-          { $set: { userId: req.userId } }
-        );
-        
-        // Fetch again after assignment
-        images = await Image.find({ userId: req.userId })
-          .sort({ createdAt: -1 })
-          .exec();
-      }
-    }
     
     res.json({
       success: true,
@@ -206,6 +184,7 @@ router.get('/history', authenticateToken, async (req, res) => {
     });
   }
 });
+
 
 // Delete user image
 router.delete('/images/:imageId', authenticateToken, async (req, res) => {
@@ -267,7 +246,7 @@ router.post('/forgot-password', async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        error: 'No account found with this email address'
+        error: 'No account found with this email'
       });
     }
 

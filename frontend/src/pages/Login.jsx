@@ -76,82 +76,154 @@ const Login = () => {
 
   return (
     <div
-      className="min-h-screen w-full flex justify-center items-center"
+      className="fixed inset-0 overflow-auto"
       style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
         backgroundImage: `url(${background})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
       }}
     >
-      <div className="flex flex-col items-center justify-center">
-        <div className="w-full max-w-md bg-black/30 backdrop-blur-md rounded-xl shadow-2xl border border-white/20 py-8 px-8">
-          <h2 className="text-[28px] font-bold text-white mb-6 text-center">
-            Login
-          </h2>
-          <form className="flex flex-col" onSubmit={handleSubmit}>
-            <input
-              name="email"
-              placeholder="Email"
-              className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 mb-4 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-            />
-            {errors.email && (
-              <p className="text-red-400 text-sm mb-3">{errors.email}</p>
-            )}
+      {/* Animated background overlay */}
+      <div className="absolute inset-0 bg-linear-to-br from-blue-900/30 via-purple-900/20 to-pink-900/30"></div>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
 
-            <input
-              name="password"
-              placeholder="Password"
-              className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 mb-4 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
-              type="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              required
-            />
-            {errors.password && (
-              <p className="text-red-400 text-sm mb-3">{errors.password}</p>
-            )}
-            
+      {/* Floating particles animation */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-400/30 rounded-full animate-pulse"></div>
+        <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-purple-400/40 rounded-full animate-bounce delay-1000"></div>
+        <div className="absolute bottom-1/4 left-1/3 w-3 h-3 bg-pink-400/20 rounded-full animate-ping delay-500"></div>
+        <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-green-400/25 rounded-full animate-pulse delay-700"></div>
+      </div>
+
+      <div className="relative z-10 flex justify-center items-center min-h-screen py-8">
+        <div className="w-full max-w-md mx-4">
+          {/* Title Section */}
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-bold bg-linear-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">
+              AI Image Analyzer
+            </h1>
+            <p className="text-white/70 text-xs">Discover the power of AI-driven image analysis</p>
+          </div>
+
+          {/* Main Form Container */}
+          <div className="w-full bg-black/60 rounded-2xl shadow-2xl border border-white/30 p-6 transform hover:scale-[1.01] transition-all duration-300">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold mb-1 text-white">
+              Welcome Back
+            </h2>
+            <p className="text-white/80 text-xs">Sign in to continue</p>
+          </div>
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            {/* General Error Display */}
             {errors.general && (
-              <div className="bg-red-500/20 border border-red-400/30 rounded-md p-3 mb-4">
-                <p className="text-red-300 text-sm">{errors.general}</p>
+              <div className="bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-xl p-3">
+                <div className="flex items-center">
+                  <span className="text-red-400 mr-2 text-sm">⚠️</span>
+                  <p className="text-red-300 text-xs font-medium">{errors.general}</p>
+                </div>
               </div>
             )}
-            
+
+            {/* Email Input */}
+            <div className="space-y-1">
+              <label className="block text-white/80 text-xs font-semibold">
+                Email Address
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  <span className="text-white/70 text-lg">✉️</span>
+                </div>
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-blue-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              {errors.email && (
+                <p className="text-red-400 text-xs flex items-center">
+                  <span className="mr-1">❌</span>{errors.email}
+                </p>
+              )}
+            </div>
+
+            {/* Password Input */}
+            <div className="space-y-1">
+              <label className="block text-white/80 text-xs font-semibold">
+                Password
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  <span className="text-white/70 text-lg">🔒</span>
+                </div>
+                <input
+                  name="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-blue-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              {errors.password && (
+                <p className="text-red-400 text-xs flex items-center">
+                  <span className="mr-1">❌</span>{errors.password}
+                </p>
+              )}
+            </div>
+
+            {/* Login Button */}
             <button
-              className="bg-linear-to-r from-indigo-500/80 to-blue-500/80 backdrop-blur-sm text-white font-medium py-3 px-4 rounded-md hover:from-indigo-600/90 hover:to-blue-600/90 border border-white/20 transition-all duration-200 transform hover:scale-105"
+              className="custom-button w-full bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-xl border-0 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transform hover:scale-[1.01] hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
               type="submit"
               disabled={loading}
             >
-              {loading ? "Signing In..." : "Submit"}
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white mr-2"></div>
+                  Signing you in...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center">
+                  Sign In
+                </span>
+              )}
             </button>
-            <p className="text-white mt-4 text-center">
-              Don't have an account?
+
+            {/* Links Section */}
+            <div className="space-y-3 text-center">
               <Link
-                className="text-blue-400 hover:underline mt-4 px-1"
-                to="/signup"
-              >
-                Sign Up
-              </Link>
-            </p>
-            <p className="text-center mt-3">
-              <Link
-                className="text-blue-400 hover:underline mt-4 px-1"
+                className="block text-blue-400 hover:text-blue-300 transition-colors duration-200 text-xs font-medium hover:underline"
                 to="/forgot-password"
               >
-                Forgot Password?
+                🔑 Forgot your password?
               </Link>
-            </p>
+              
+              <div className="flex items-center justify-center">
+                <div className="flex-1 h-px bg-white/20"></div>
+                <span className="px-3 text-white/50 text-xs">or</span>
+                <div className="flex-1 h-px bg-white/20"></div>
+              </div>
+
+              <p className="text-white/70 text-xs">
+                Don't have an account?{" "}
+                <Link
+                  className="text-purple-400 hover:text-purple-300 font-semibold transition-colors duration-200 hover:underline"
+                  to="/signup"
+                >
+                  Create Account
+                </Link>
+              </p>
+            </div>
           </form>
+        </div>
         </div>
       </div>
     </div>

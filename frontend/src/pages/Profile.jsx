@@ -317,7 +317,7 @@ const Profile = () => {
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📷</div>
               <h3 className="text-white text-xl font-bold mb-2">
-                No uploads yet
+                No upload yet
               </h3>
               <p className="text-white/70 mb-6">
                 Start by uploading your first image!
@@ -326,7 +326,7 @@ const Profile = () => {
                 onClick={() => navigate("/home")}
                 className="bg-linear-to-r from-blue-500/90 to-green-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-8 py-3 rounded-2xl hover:from-blue-600/90 hover:to-green-600/90 transition-all duration-300 font-semibold shadow-lg hover:shadow-green-500/30 hover:scale-105"
               >
-                🚀 Upload Now
+                Upload Now
               </button>
             </div>
           ) : (

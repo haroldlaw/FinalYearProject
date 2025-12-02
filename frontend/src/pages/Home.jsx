@@ -12,6 +12,10 @@ const Home = () => {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith("image/")) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File too large! Please select an image under 10MB.");
+        return;
+      }
       console.log("Image selected:", file.name);
       setSelectedImage(file);
     }
@@ -34,6 +38,10 @@ const Home = () => {
 
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith("image/")) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File too large! Please select an image under 10MB.");
+        return;
+      }
       console.log("Image dropped:", file.name);
       setSelectedImage(file);
     }
@@ -164,7 +172,7 @@ const Home = () => {
                 Drag & drop an image here, or click to select
               </p>
               <p className="text-white/70 text-sm">
-                Supports JPG & PNG • Max 10MB
+                Supports all image formats (JPG, PNG, GIF, WEBP, etc.) • Max 10MB
               </p>
             </div>
           ) : (
@@ -254,7 +262,7 @@ const Home = () => {
               <p className="text-white/90 font-medium">Exposure</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl mb-2">🌈</div>
+              <div className="text-2xl mb-2">🎨</div>
               <p className="text-white/90 font-medium">Color & Contrast</p>
             </div>
           </div>
