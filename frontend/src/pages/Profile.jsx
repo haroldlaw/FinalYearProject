@@ -12,6 +12,7 @@ const Profile = () => {
     isAuthenticated,
     loading: authLoading,
     getUserHistory,
+    logout,
   } = useAuth();
 
   const [uploadHistory, setUploadHistory] = useState([]);
@@ -106,6 +107,18 @@ const Profile = () => {
 
   const closeImageModal = () => {
     setSelectedImage(null);
+  };
+
+  const handleLogout = async () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      try {
+        await logout();
+        navigate("/login");
+      } catch (error) {
+        console.error("Logout error:", error);
+        alert("Failed to logout. Please try again.");
+      }
+    }
   };
 
   const handleDeleteImage = async (imageId) => {
@@ -229,7 +242,12 @@ const Profile = () => {
             <h1 className="text-4xl font-bold bg-linear-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent absolute left-1/2 transform -translate-x-1/2">
               Profile
             </h1>
-            <div></div>
+            <button
+              onClick={handleLogout}
+              className="bg-linear-to-r from-red-500/90 to-red-600/90 backdrop-blur-sm border-2 border-white/30 text-white px-6 py-3 rounded-2xl hover:from-red-600/90 hover:to-red-700/90 transition-all duration-300 font-semibold shadow-lg hover:shadow-red-500/30 hover:scale-105"
+            >
+              Logout
+            </button>
           </div>
         </div>
 
