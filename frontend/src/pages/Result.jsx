@@ -318,12 +318,18 @@ const Result = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-8 flex justify-center gap-6">
+        <div className="mt-8 flex flex-col items-center gap-4">
           <button
             onClick={handleNewAnalysis}
             className="bg-linear-to-r from-blue-500/90 to-green-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-8 py-4 rounded-2xl hover:from-blue-600/90 hover:to-green-600/90 transition-all duration-300 font-semibold text-lg shadow-xl hover:shadow-green-500/30 hover:scale-105"
           >
             🔍 Analyze Another Image
+          </button>
+          <button
+            onClick={() => navigate("/profile")}
+            className="bg-linear-to-r from-purple-500/90 to-pink-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-8 py-4 rounded-2xl hover:from-purple-600/90 hover:to-pink-600/90 transition-all duration-300 font-semibold text-lg shadow-xl hover:shadow-purple-500/30 hover:scale-105"
+          >
+            👤 View Profile
           </button>
         </div>
       </div>

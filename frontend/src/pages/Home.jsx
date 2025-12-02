@@ -115,15 +115,13 @@ const Home = () => {
       }}
     >
       {/* Profile Button */}
-      <div className="fixed top-8 left-8 z-20">
-        <div className="bg-black/60 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-4 shadow-2xl hover:shadow-blue-500/30 transition-all duration-500">
-          <button
-            onClick={() => navigate("/profile")}
-            className="bg-linear-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent font-bold hover:scale-105 transition-all duration-300"
-          >
-            👤
-          </button>
-        </div>
+      <div className="fixed top-12 left-16 z-20">
+        <button
+          onClick={() => navigate("/profile")}
+          className="bg-black/60 backdrop-blur-xl border-2 border-white/40 text-transparent bg-linear-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text w-12 h-12 rounded-full flex items-center justify-center hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-blue-500/30 text-xl font-bold"
+        >
+          👤
+        </button>
       </div>
 
       <div className="w-full max-w-4xl mx-auto px-6 py-6 min-h-full flex flex-col justify-center">
