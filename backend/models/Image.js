@@ -34,6 +34,12 @@ const imageSchema = new mongoose.Schema({
     type: String,
     enum: ['cloudinary', 'local'],
     default: 'cloudinary'
+  },
+  analysisScore: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0
   }
 }, {
   timestamps: true

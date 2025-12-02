@@ -163,6 +163,7 @@ router.post("/upload", authenticateToken, upload.single("analysisImage"), async 
       mimetype: req.file.mimetype,
       uploadDate: new Date(),
       storageType: "cloudinary",
+      analysisScore: analysisResult.confidence, // Add the analysis score
     });
 
     const savedImage = await imageData.save();
@@ -248,41 +249,6 @@ router.get("/:id", async (req, res) => {
     console.error("Error fetching image:", error);
     res.status(500).json({
       error: "Failed to fetch image",
-      details: error.message,
-    });
-  }
-});
-
-// Delete image
-router.delete("/:id", async (req, res) => {
-  try {
-    console.log("Deleting image:", req.params.id);
-
-    const image = await Image.findById(req.params.id);
-
-    if (!image) {
-      return res.status(404).json({ error: "Image not found" });
-    }
-
-    // Delete from Cloudinary if it exists there
-    if (image.cloudinaryPublicId) {
-      console.log("Deleting from Cloudinary...");
-      await cloudinary.uploader.destroy(image.cloudinaryPublicId);
-      console.log("Deleted from Cloudinary");
-    }
-
-    // Delete from database
-    await Image.findByIdAndDelete(req.params.id);
-    console.log("Deleted from database");
-
-    res.json({
-      success: true,
-      message: "Image deleted successfully",
-    });
-  } catch (error) {
-    console.error("Error deleting image:", error);
-    res.status(500).json({
-      error: "Failed to delete image",
       details: error.message,
     });
   }

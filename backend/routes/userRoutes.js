@@ -1,10 +1,17 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
-
+const cloudinary = require('cloudinary').v2;
 const router = express.Router()
 
-// sign up
+// Configure Cloudinary 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Sign up
 router.post('/signup', async (req, res) => {
   try {
     const { username, email, password } = req.body
@@ -15,7 +22,7 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' })
     }
 
-    // create user
+    // Create user
     const newUser = new User({ 
       username, 
       email: email.toLowerCase(), 
@@ -65,7 +72,7 @@ router.post('/signup', async (req, res) => {
   }
 })
 
-// authenticate user
+// Authenticate user
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body
@@ -212,11 +219,23 @@ router.delete('/images/:imageId', authenticateToken, async (req, res) => {
     if (!image) {
       return res.status(404).json({ 
         success: false,
-        error: 'Image not found or you do not have permission to delete it' 
+        error: 'Image not found' 
       });
     }
 
+    // Delete from Cloudinary
+    if (image.cloudinaryPublicId) {
+      try {
+        const cloudinaryResult = await cloudinary.uploader.destroy(image.cloudinaryPublicId);
+        console.log('Cloudinary deletion result:', cloudinaryResult);
+      } catch (cloudinaryError) {
+        console.error('Error deleting from Cloudinary:', cloudinaryError);
+      }
+    }
+
+    // Delete from database
     await Image.findByIdAndDelete(req.params.imageId);
+    console.log("Deleted from database");
     
     res.json({
       success: true,

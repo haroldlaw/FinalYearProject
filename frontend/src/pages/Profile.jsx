@@ -173,7 +173,7 @@ const Profile = () => {
               🔐 Checking Authentication...
             </h2>
             <p className="text-white/70">
-              Please wait while we verify your session
+              Please wait while your session is being verified.
             </p>
           </div>
         </div>
@@ -249,13 +249,10 @@ const Profile = () => {
               )}
               <h3 className="text-white font-bold text-lg mb-1">{user.name}</h3>
               <p className="text-white/70 text-sm">{user.email}</p>
-              <p className="text-white/50 text-xs mt-1">
-                {isAuthenticated ? "🟢 Authenticated" : "🔴 Guest Mode"}
-              </p>
             </div>
             <div className="text-center">
               <div className="text-2xl mb-2">📅</div>
-              <p className="text-white/70 text-sm">Member Since</p>
+              <p className="text-white/70 text-sm">Account Created</p>
               <p className="text-white font-semibold">{user.joinDate}</p>
             </div>
             <div className="text-center">
@@ -289,17 +286,6 @@ const Profile = () => {
               <span className="text-3xl mr-3">📚</span>
               Upload History ({uploadHistory.length})
             </h2>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  fetchUploadHistory();
-                }}
-                className="bg-linear-to-r from-purple-500/90 to-blue-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-4 py-2 rounded-xl hover:from-purple-600/90 hover:to-blue-600/90 transition-all duration-300 font-semibold shadow-lg hover:shadow-purple-500/30 hover:scale-105"
-                disabled={loading}
-              >
-                {loading ? "🔄" : "↻"} Refresh
-              </button>
-            </div>
           </div>
 
           {error && (
@@ -394,13 +380,13 @@ const Profile = () => {
                     onClick={() => handleDeleteImage(selectedImage.id || selectedImage._id)}
                     className="bg-linear-to-r from-red-500/90 to-red-600/90 backdrop-blur-sm border-2 border-white/30 text-white px-4 py-2 rounded-xl hover:from-red-600/90 hover:to-red-700/90 transition-all duration-300 font-semibold shadow-lg hover:shadow-red-500/30 hover:scale-105"
                   >
-                    🗑️ Delete
+                    Delete
                   </button>
                   <button
                     onClick={closeImageModal}
                     className="bg-linear-to-r from-gray-500/90 to-gray-600/90 backdrop-blur-sm border-2 border-white/30 text-white px-4 py-2 rounded-xl hover:from-gray-600/90 hover:to-gray-700/90 transition-all duration-300 font-semibold shadow-lg hover:scale-105"
                   >
-                    ❌ Close
+                    Close
                   </button>
                 </div>
               </div>
@@ -460,7 +446,7 @@ const Profile = () => {
                         {selectedImage.fileSize ? (selectedImage.fileSize / 1024 / 1024).toFixed(2) : "N/A"} MB
                       </p>
                       <p>
-                        <span className="font-semibold">📅 Uploaded:</span>{" "}
+                        <span className="font-semibold">📅 Analyzed:</span>{" "}
                         {formatDate(selectedImage.uploadDate || selectedImage.createdAt || new Date())}
                       </p>
                       <p>

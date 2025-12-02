@@ -126,9 +126,4 @@ export const imageAPI = {
   getImage: async (imageId) => {
     return await apiCall(`/images/${imageId}`, { method: "GET" });
   },
-
-  // Delete image
- deleteImage: async (imageId) => {
-    return await apiCall(`/images/${imageId}`, { method: 'DELETE' });
-  }
 };
