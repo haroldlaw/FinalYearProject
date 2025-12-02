@@ -20,7 +20,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Email is required'],
     unique: true,
-    lowercase: true,
     trim: true,
     validate: {
       validator: function(v) {
@@ -168,7 +167,7 @@ userSchema.methods.resetLoginAttempts = function() {
 
 // Static method to find user by email (case insensitive)
 userSchema.statics.findByEmail = function(email) {
-  return this.findOne({ email: email.toLowerCase() })
+  return this.findOne({ email: email })
 }
 
 // Instance method to generate password reset token

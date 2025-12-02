@@ -238,11 +238,11 @@ const Home = () => {
         {/* Description */}
         <div className="mt-8 bg-black/40 backdrop-blur-xl border-2 border-white/30 rounded-3xl p-6 shadow-xl hover:shadow-purple-500/20 transition-all duration-500">
           <h3 className="text-xl font-bold text-white mb-4 text-center bg-linear-to-r from-purple-400 to-pink-400 bg-clip-text">
-            🚀 Analyzed Based On
+            🧠 Analyzed Based On
           </h3>
           <div className="grid md:grid-cols-4 gap-4 text-sm">
             <div className="text-center">
-              <div className="text-2xl mb-2">🎨</div>
+              <div className="text-2xl mb-2">🖼️</div>
               <p className="text-white/90 font-medium">Composition</p>
             </div>
             <div className="text-center">
