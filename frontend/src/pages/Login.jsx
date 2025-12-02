@@ -134,16 +134,6 @@ const Login = () => {
             >
               {loading ? "Signing In..." : "Submit"}
             </button>
-            
-            <p className="text-center mt-3">
-              <Link
-                className="text-blue-400 hover:text-blue-300 hover:underline text-sm"
-                to="/forgot-password"
-              >
-                Forgot Password?
-              </Link>
-            </p>
-            
             <p className="text-white mt-4 text-center">
               Don't have an account?
               <Link
@@ -151,6 +141,14 @@ const Login = () => {
                 to="/signup"
               >
                 Sign Up
+              </Link>
+            </p>
+            <p className="text-center mt-3">
+              <Link
+                className="text-blue-400 hover:underline mt-4 px-1"
+                to="/forgot-password"
+              >
+                Forgot Password?
               </Link>
             </p>
           </form>

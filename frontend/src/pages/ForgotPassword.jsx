@@ -12,7 +12,26 @@ const ForgotPassword = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [step, setStep] = useState(1); // 1: Enter email, 2: Reset password, 3: Success
+  const [step, setStep] = useState(1); 
+
+  const handleInputChange = (field, value) => {
+    // Clear specific field error when user starts typing
+    if (errors[field]) {
+      setErrors({
+        ...errors,
+        [field]: "",
+      });
+    }
+
+    // Update the specific field
+    if (field === 'email') {
+      setEmail(value);
+    } else if (field === 'password') {
+      setNewPassword(value);
+    } else if (field === 'confirmPassword') {
+      setConfirmPassword(value);
+    }
+  };
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
@@ -48,15 +67,44 @@ const ForgotPassword = () => {
     setLoading(true);
     setErrors({});
 
-    // Validation
+    // Validation 
     const newErrors = {};
+    
+    // Password validation
     if (!newPassword) {
       newErrors.password = "Password is required";
-    } else if (newPassword.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (newPassword.length < 8) {
+      newErrors.password = "Password must have at least 8 characters";
+    } else {
+      // Additional password strength requirements
+      const hasUpperCase = /[A-Z]/.test(newPassword);
+      const hasLowerCase = /[a-z]/.test(newPassword);
+      const hasNumbers = /\d/.test(newPassword);
+      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
+
+      if (!hasUpperCase) {
+        newErrors.password =
+          "Password must contain at least one uppercase letter";
+      } else if (!hasLowerCase) {
+        newErrors.password =
+          "Password must contain at least one lowercase letter";
+      } else if (!hasNumbers) {
+        newErrors.password = "Password must contain at least one number";
+      } else if (!hasSpecialChar) {
+        newErrors.password =
+          "Password must contain at least one special character";
+      }
     }
-    if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+
+    // Password confirmation validation
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (
+      newPassword &&
+      confirmPassword &&
+      newPassword !== confirmPassword
+    ) {
+      newErrors.confirmPassword = "Password does not match";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -114,7 +162,7 @@ const ForgotPassword = () => {
           {step === 1 && (
             <form className="flex flex-col" onSubmit={handleEmailSubmit}>
               <p className="text-white/80 text-sm mb-4 text-center">
-                Enter your email address to reset your password
+                Enter your email to reset password
               </p>
               
               <input
@@ -123,7 +171,7 @@ const ForgotPassword = () => {
                 className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 mb-4 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => handleInputChange('email', e.target.value)}
                 required
               />
               {errors.email && (
@@ -165,7 +213,7 @@ const ForgotPassword = () => {
                 className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 mb-4 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
                 type="password"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => handleInputChange('password', e.target.value)}
                 required
               />
               {errors.password && (
@@ -178,7 +226,7 @@ const ForgotPassword = () => {
                 className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md p-3 mb-4 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all duration-150 placeholder-gray-300"
                 type="password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                 required
               />
               {errors.confirmPassword && (
