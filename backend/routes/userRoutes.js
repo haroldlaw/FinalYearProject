@@ -308,6 +308,15 @@ router.post('/reset-password', async (req, res) => {
       });
     }
 
+    // Check if new password is same as current password
+    const isSamePassword = await user.comparePassword(newPassword);
+    if (isSamePassword) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'New password cannot be the same as your current password. Please choose a different password.' 
+      });
+    }
+
     // Update password directly (will be hashed by the model middleware)
     user.password = newPassword;
     await user.save();

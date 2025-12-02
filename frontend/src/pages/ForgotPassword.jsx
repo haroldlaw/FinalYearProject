@@ -124,7 +124,12 @@ const ForgotPassword = () => {
           navigate("/login");
         }, 2000);
       } else {
-        setErrors({ general: result.error || "Failed to update password" });
+        // Check if it's a password-specific error
+        if (result.error && result.error.toLowerCase().includes('password cannot be the same')) {
+          setErrors({ password: result.error });
+        } else {
+          setErrors({ general: result.error || "Failed to update password" });
+        }
       }
     } catch (error) {
       console.error("Reset password error:", error);
