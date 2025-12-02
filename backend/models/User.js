@@ -46,34 +46,6 @@ const userSchema = new mongoose.Schema({
       message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
     }
   },
-  lastLogin: {
-    type: Date,
-    default: null
-  },
-  loginAttempts: {
-    type: Number,
-    default: 0
-  },
-  lockUntil: {
-    type: Date,
-    default: null
-  },
-  emailVerified: {
-    type: Boolean,
-    default: false
-  },
-  emailVerificationToken: {
-    type: String,
-    default: null
-  },
-  passwordResetToken: {
-    type: String,
-    default: null
-  },
-  passwordResetExpires: {
-    type: Date,
-    default: null
-  }
 }, {
   timestamps: true, // Automatically adds createdAt and updatedAt fields
   toJSON: {
