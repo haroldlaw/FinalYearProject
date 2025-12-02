@@ -6,6 +6,7 @@ import SignUp from './pages/SignUp'
 import Home from './pages/Home'
 import Result from './pages/Result'
 import Profile from './pages/Profile'
+import ForgotPassword from './pages/ForgotPassword'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/home" element={<Home />} />
             <Route path="/result" element={<Result />} />
             <Route path="/profile" element={<Profile />} />

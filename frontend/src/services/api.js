@@ -107,6 +107,22 @@ export const authAPI = {
   // Delete user image
   deleteUserImage: async (imageId) => {
     return await apiCall(`/users/images/${imageId}`, { method: 'DELETE' })
+  },
+
+  // Forgot password
+  forgotPassword: async (email) => {
+    return await apiCall('/users/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    })
+  },
+
+  // Reset password
+  resetPassword: async (email, newPassword) => {
+    return await apiCall('/users/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, newPassword }),
+    })
   }
 }
 

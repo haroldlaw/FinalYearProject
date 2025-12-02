@@ -250,6 +250,84 @@ router.delete('/images/:imageId', authenticateToken, async (req, res) => {
   }
 });
 
+// Forgot Password - Check email exists
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Email is required' 
+      });
+    }
+
+    // Find user by email
+    const user = await User.findByEmail(email);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: 'No account found with this email address'
+      });
+    }
+
+    console.log('Forgot password request for:', email);
+
+    res.json({
+      success: true,
+      message: 'Email verified! You can now create a new password.'
+    });
+
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Server error' 
+    });
+  }
+});
+
+// Reset Password - Update password directly
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Email and new password are required' 
+      });
+    }
+
+    // Find user by email
+    const user = await User.findByEmail(email);
+    if (!user) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'User not found' 
+      });
+    }
+
+    // Update password directly (will be hashed by the model middleware)
+    user.password = newPassword;
+    await user.save();
+
+    console.log('Password reset successful for user:', user.email);
+
+    res.json({
+      success: true,
+      message: 'Password reset successful! You can now login with your new password.'
+    });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Server error' 
+    });
+  }
+});
+
 // Middleware to authenticate token from cookie
 function authenticateToken(req, res, next) {
   const token = req.cookies.auth_token;
