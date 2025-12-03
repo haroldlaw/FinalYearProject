@@ -65,17 +65,6 @@ const Profile = () => {
     }
   }, [isAuthenticated, authUser]);
 
-  // Add a refresh interval to check for new uploads
-  useEffect(() => {
-    if (isAuthenticated) {
-      const interval = setInterval(() => {
-        fetchUploadHistory();
-      }, 30000); // Refresh every 30 seconds
-
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated]);
-
   const fetchUploadHistory = async () => {
     try {
       setLoading(true);
