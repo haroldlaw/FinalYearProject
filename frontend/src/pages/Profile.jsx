@@ -181,8 +181,8 @@ const Profile = () => {
       >
         <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-10">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-20 w-20 border-4 border-blue-400/30 border-t-blue-400 mx-auto mb-6"></div>
-            <h2 className="text-2xl font-bold text-white mb-3">
+            <div className="animate-spin rounded-full h-20 w-20 border-4 border-cyan-400/30 border-t-cyan-400 mx-auto mb-6"></div>
+            <h2 className="text-2xl font-bold text-white mb-3 bg-linear-to-r from-cyan-400 to-purple-400 bg-clip-text">
               🔐 Checking Authentication...
             </h2>
             <p className="text-white/70">
@@ -208,8 +208,8 @@ const Profile = () => {
       >
         <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-10">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-20 w-20 border-4 border-blue-400/30 border-t-blue-400 mx-auto mb-6"></div>
-            <h2 className="text-2xl font-bold text-white mb-3">
+            <div className="animate-spin rounded-full h-20 w-20 border-4 border-cyan-400/30 border-t-cyan-400 mx-auto mb-6"></div>
+            <h2 className="text-2xl font-bold text-white mb-3 bg-linear-to-r from-cyan-400 to-purple-400 bg-clip-text">
               Loading Profile...
             </h2>
           </div>
@@ -231,15 +231,15 @@ const Profile = () => {
     >
       <div className="w-full max-w-7xl mx-auto px-6 py-6 min-h-full">
         {/* Header */}
-        <div className="bg-black/60 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-6 mb-6 shadow-2xl hover:shadow-blue-500/30 transition-all duration-500">
+        <div className="bg-black/60 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-6 mb-6 shadow-2xl hover:shadow-cyan-500/30 transition-all duration-500">
           <div className="flex justify-between items-center relative">
             <button
               onClick={() => navigate("/home")}
-              className="bg-linear-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent font-bold hover:scale-105 transition-all duration-300 border-2 border-white/30 px-6 py-3 rounded-2xl backdrop-blur-sm shadow-lg hover:shadow-blue-500/30"
+              className="bg-linear-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent font-bold hover:scale-105 transition-all duration-300 border-2 border-white/30 px-6 py-3 rounded-2xl backdrop-blur-sm shadow-lg hover:shadow-cyan-500/30"
             >
               ← Back
             </button>
-            <h1 className="text-4xl font-bold bg-linear-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent absolute left-1/2 transform -translate-x-1/2">
+            <h1 className="text-4xl font-bold bg-linear-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent absolute left-1/2 transform -translate-x-1/2">
               Profile
             </h1>
             <button
@@ -252,7 +252,7 @@ const Profile = () => {
         </div>
 
         {/* User Info */}
-        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-6 mb-8 hover:shadow-purple-500/30 transition-all duration-500">
+        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-6 mb-8 hover:shadow-cyan-500/30 transition-all duration-500">
           <div className="grid md:grid-cols-4 gap-6">
             <div className="text-center">
               {user.avatar ? (
@@ -299,7 +299,7 @@ const Profile = () => {
         </div>
 
         {/* Upload History */}
-        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-6 hover:shadow-green-500/30 transition-all duration-500">
+        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-6 hover:shadow-cyan-500/30 transition-all duration-500">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-white flex items-center">
               <span className="text-3xl mr-3">📚</span>
@@ -324,7 +324,7 @@ const Profile = () => {
               </p>
               <button
                 onClick={() => navigate("/home")}
-                className="bg-linear-to-r from-blue-500/90 to-green-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-8 py-3 rounded-2xl hover:from-blue-600/90 hover:to-green-600/90 transition-all duration-300 font-semibold shadow-lg hover:shadow-green-500/30 hover:scale-105"
+                className="custom-button bg-linear-to-r from-cyan-500/90 to-purple-500/90 backdrop-blur-sm border-0 text-white px-8 py-3 rounded-2xl hover:from-cyan-600/90 hover:to-purple-600/90 transition-all duration-300 font-bold text-lg shadow-xl hover:shadow-cyan-500/30 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 Upload Now
               </button>
@@ -335,7 +335,7 @@ const Profile = () => {
                 return (
                   <div
                     key={image._id || image.id || index}
-                    className="bg-linear-to-r from-gray-900/60 to-gray-800/60 backdrop-blur-lg border-2 border-white/30 rounded-2xl p-4 shadow-xl hover:shadow-blue-500/20 transition-all duration-400 hover:scale-[1.02] cursor-pointer"
+                    className="bg-linear-to-r from-gray-900/60 to-gray-800/60 backdrop-blur-lg border-2 border-white/30 rounded-2xl p-4 shadow-xl hover:shadow-cyan-500/20 transition-all duration-400 hover:scale-[1.02] cursor-pointer"
                     onClick={() => handleImageClick(image)}
                   >
                     <img

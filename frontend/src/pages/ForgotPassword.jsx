@@ -150,22 +150,10 @@ const ForgotPassword = () => {
         backgroundAttachment: "fixed",
       }}
     >
-      {/* Animated background overlay */}
-      <div className="fixed inset-0 bg-linear-to-br from-blue-900/30 via-purple-900/20 to-pink-900/30"></div>
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-[1px]"></div>
-
-      {/* Floating particles animation */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/6 w-2 h-2 bg-blue-400/30 rounded-full animate-pulse delay-200"></div>
-        <div className="absolute top-3/4 right-1/6 w-1 h-1 bg-purple-400/40 rounded-full animate-bounce delay-1000"></div>
-        <div className="absolute bottom-1/4 left-2/6 w-3 h-3 bg-pink-400/20 rounded-full animate-ping delay-600"></div>
-        <div className="absolute top-1/3 right-2/6 w-2 h-2 bg-blue-400/25 rounded-full animate-pulse delay-400"></div>
-      </div>
-      
-      <div className="relative z-10 flex justify-center items-center min-h-screen py-8">
+      <div className="flex justify-center items-center min-h-screen py-8">
         <div className="w-full max-w-md mx-4">
           {/* Main Form Container */}
-          <div className="w-full bg-black/60 rounded-2xl shadow-2xl border border-white/30 p-6 transform hover:scale-[1.01] transition-all duration-300">
+          <div className="w-full bg-black/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 p-6 transform hover:scale-[1.01] transition-all duration-300">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold mb-1 text-white">
                 {step === 1 && "🔑 Forgot Password"}
@@ -194,7 +182,7 @@ const ForgotPassword = () => {
                     name="email"
                     type="email"
                     placeholder="Enter your email"
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-blue-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-cyan-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
                     value={email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     required
@@ -207,9 +195,8 @@ const ForgotPassword = () => {
                 )}
               </div>
 
-              {/* Continue Button */}
               <button
-                className="custom-button w-full bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-xl border-0 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transform hover:scale-[1.01] hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
+                className="custom-button w-full bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl border-0 hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transform hover:scale-[1.01] hover:shadow-xl hover:shadow-cyan-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
                 type="submit"
                 disabled={loading}
               >
@@ -225,10 +212,9 @@ const ForgotPassword = () => {
                 )}
               </button>
 
-              {/* Back to Login Link */}
               <div className="text-center">
                 <Link
-                  className="text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-200 hover:underline text-xs"
+                  className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors duration-200 hover:underline text-xs"
                   to="/login"
                 >
                   ← Back to Login
@@ -263,7 +249,7 @@ const ForgotPassword = () => {
                     name="newPassword"
                     type="password"
                     placeholder="Enter new password"
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-green-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-cyan-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
                     value={newPassword}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     required
@@ -289,7 +275,7 @@ const ForgotPassword = () => {
                     name="confirmPassword"
                     type="password"
                     placeholder="Confirm new password"
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-green-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-cyan-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
                     value={confirmPassword}
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                     required
@@ -314,7 +300,7 @@ const ForgotPassword = () => {
 
               {/* Update Password Button */}
               <button
-                className="custom-button w-full bg-linear-to-r from-green-500 via-blue-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl border-0 hover:from-green-600 hover:via-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transform hover:scale-[1.01] hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
+                className="custom-button w-full bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl border-0 hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transform hover:scale-[1.01] hover:shadow-xl hover:shadow-cyan-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
                 type="submit"
                 disabled={loading}
               >

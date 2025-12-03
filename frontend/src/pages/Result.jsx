@@ -37,10 +37,10 @@ const Result = () => {
           backgroundRepeat: "no-repeat",
         }}
       >
-        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-10 hover:shadow-blue-500/30 transition-all duration-500 animate-pulse">
+        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-10 hover:shadow-cyan-500/30 transition-all duration-500 animate-pulse">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-20 w-20 border-4 border-blue-400/30 border-t-blue-400 mx-auto mb-6"></div>
-            <h2 className="text-2xl font-bold text-white mb-3 bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text">
+            <div className="animate-spin rounded-full h-20 w-20 border-4 border-cyan-400/30 border-t-cyan-400 mx-auto mb-6"></div>
+            <h2 className="text-2xl font-bold text-white mb-3 bg-linear-to-r from-cyan-400 to-purple-400 bg-clip-text">
               Loading Analysis...
             </h2>
             <p className="text-white/90 text-lg">Please wait while your image is being analyzed</p>
@@ -71,7 +71,7 @@ const Result = () => {
           </p>
           <Link
             to="/home"
-            className="bg-linear-to-r from-blue-500/90 to-green-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-8 py-4 rounded-xl hover:from-blue-600/90 hover:to-green-600/90 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-green-500/30 hover:scale-105"
+            className="bg-linear-to-r from-cyan-500/90 to-purple-500/90 backdrop-blur-sm border-0 text-white px-6 py-3 rounded-xl hover:from-cyan-600/90 hover:to-purple-600/90 transition-all duration-300 font-semibold text-base shadow-lg hover:shadow-cyan-500/30 hover:scale-105"
           >
             🔍 Analyze New Image
           </Link>
@@ -93,10 +93,10 @@ const Result = () => {
     >
       <div className="w-full max-w-7xl mx-auto px-6 py-6 min-h-full flex flex-col">
         {/* Header */}
-        <div className="bg-black/60 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-6 mb-6 shadow-2xl hover:shadow-blue-500/30 transition-all duration-500">
+        <div className="bg-black/60 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-6 mb-6 shadow-2xl hover:shadow-cyan-500/30 transition-all duration-500">
           <div className="flex justify-center items-center">
-            <h1 className="text-4xl font-bold bg-linear-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent text-center">
-              ✨ AI Image Analyzer ✨
+            <h1 className="text-4xl font-bold bg-linear-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent text-center">
+              AI Image Analyzer
             </h1>
           </div>
         </div>
@@ -209,7 +209,7 @@ const Result = () => {
                       { label: "Leading Lines", value: analysisData.analysisResult.composition?.leadingLines || "Present" },
                       { label: "Symmetry", value: analysisData.analysisResult.composition?.symmetry || "Good" }
                     ].map((item, index) => (
-                      <div key={index} className="bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-blue-400/30 transition-colors">
+                      <div key={index} className="bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-cyan-400/30 transition-colors">
                         <span className="text-white/70 text-xs">{item.label}:</span>
                         <p className="text-white font-semibold text-sm mt-1">{item.value}</p>
                       </div>
@@ -229,7 +229,7 @@ const Result = () => {
                       { label: "Depth of Field", value: analysisData.analysisResult.focus?.depthOfField || "Appropriate" },
                       { label: "Focus Point", value: analysisData.analysisResult.focus?.focusPoint || "Well Placed" }
                     ].map((item, index) => (
-                      <div key={index} className="bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-green-400/30 transition-colors">
+                      <div key={index} className="bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-cyan-400/30 transition-colors">
                         <span className="text-white/70 text-xs">{item.label}:</span>
                         <p className="text-white font-semibold text-sm mt-1">{item.value}</p>
                       </div>
@@ -250,7 +250,7 @@ const Result = () => {
                       { label: "Shadows", value: analysisData.analysisResult.exposure?.shadows || "Detailed" },
                       { label: "Dynamic Range", value: analysisData.analysisResult.exposure?.dynamicRange || "Good" }
                     ].map((item, index) => (
-                      <div key={index} className="bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-orange-400/30 transition-colors">
+                      <div key={index} className="bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-cyan-400/30 transition-colors">
                         <span className="text-white/70 text-xs">{item.label}:</span>
                         <p className="text-white font-semibold text-sm mt-1">{item.value}</p>
                       </div>
@@ -269,7 +269,7 @@ const Result = () => {
                       { label: "White Balance", value: analysisData.analysisResult.color?.whiteBalance || "Correct" },
                       { label: "Contrast", value: analysisData.analysisResult.color?.contrast || "Appropriate" }
                     ].map((item, index) => (
-                      <div key={index} className="bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-pink-400/30 transition-colors">
+                      <div key={index} className="bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-cyan-400/30 transition-colors">
                         <span className="text-white/70 text-xs">{item.label}:</span>
                         <p className="text-white font-semibold text-sm mt-1">{item.value}</p>
                       </div>
@@ -321,13 +321,13 @@ const Result = () => {
         <div className="mt-8 flex flex-col items-center gap-4">
           <button
             onClick={handleNewAnalysis}
-            className="bg-linear-to-r from-blue-500/90 to-green-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-8 py-4 rounded-2xl hover:from-blue-600/90 hover:to-green-600/90 transition-all duration-300 font-semibold text-lg shadow-xl hover:shadow-green-500/30 hover:scale-105"
+            className="custom-button bg-linear-to-r from-cyan-500/90 to-purple-500/90 backdrop-blur-sm border-0 text-white px-6 py-3 rounded-2xl hover:from-cyan-600/90 hover:to-purple-600/90 transition-all duration-300 font-semibold text-base shadow-xl hover:shadow-cyan-500/30 hover:scale-105"
           >
             🔍 Analyze Another Image
           </button>
           <button
             onClick={() => navigate("/profile")}
-            className="bg-linear-to-r from-purple-500/90 to-pink-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-8 py-4 rounded-2xl hover:from-purple-600/90 hover:to-pink-600/90 transition-all duration-300 font-semibold text-lg shadow-xl hover:shadow-purple-500/30 hover:scale-105"
+            className="custom-button bg-linear-to-r from-blue-500/90 to-purple-500/90 backdrop-blur-sm border-0 text-white px-6 py-3 rounded-2xl hover:from-blue-600/90 hover:to-purple-600/90 transition-all duration-300 font-semibold text-base shadow-xl hover:shadow-blue-500/30 hover:scale-105"
           >
             👤 View Profile
           </button>

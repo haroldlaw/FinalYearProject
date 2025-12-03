@@ -96,10 +96,10 @@ const Home = () => {
           backgroundAttachment: "fixed",
         }}
       >
-        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-10 hover:shadow-blue-500/30 transition-all duration-500 animate-pulse">
+        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-10 hover:shadow-cyan-500/30 transition-all duration-500 animate-pulse">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-20 w-20 border-4 border-blue-400/30 border-t-blue-400 mx-auto mb-6"></div>
-            <h2 className="text-2xl font-bold text-white mb-3 bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text">
+            <div className="animate-spin rounded-full h-20 w-20 border-4 border-cyan-400/30 border-t-cyan-400 mx-auto mb-6"></div>
+            <h2 className="text-2xl font-bold text-white mb-3 bg-linear-to-r from-cyan-400 to-purple-400 bg-clip-text">
               Analyzing Image...
             </h2>
             <p className="text-white/90 text-lg">
@@ -126,7 +126,7 @@ const Home = () => {
       <div className="fixed top-12 left-16 z-20">
         <button
           onClick={() => navigate("/profile")}
-          className="bg-black/60 backdrop-blur-xl border-2 border-white/40 text-transparent bg-linear-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text w-12 h-12 rounded-full flex items-center justify-center hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-blue-500/30 text-xl font-bold"
+          className="bg-black/60 backdrop-blur-xl border-2 border-white/40 text-transparent bg-linear-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text w-12 h-12 rounded-full flex items-center justify-center hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-cyan-500/30 text-xl font-bold"
         >
           👤
         </button>
@@ -134,10 +134,10 @@ const Home = () => {
 
       <div className="w-full max-w-4xl mx-auto px-6 py-6 min-h-full flex flex-col justify-center">
         {/* Header */}
-        <div className="bg-black/60 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-6 mb-8 shadow-2xl hover:shadow-blue-500/30 transition-all duration-500">
+        <div className="bg-black/60 backdrop-blur-xl border-2 border-white/40 rounded-3xl p-6 mb-8 shadow-2xl hover:shadow-cyan-500/30 transition-all duration-500">
           <div className="flex justify-center items-center">
-            <h1 className="text-4xl font-bold bg-linear-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent text-center">
-              ✨ AI Image Analyzer ✨
+            <h1 className="text-4xl font-bold bg-linear-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent text-center">
+              AI Image Analyzer
             </h1>
           </div>
         </div>
@@ -165,7 +165,7 @@ const Home = () => {
                 id="imageUpload"
               />
               <div className="text-8xl mb-6 animate-bounce">📁</div>
-              <h3 className="text-white text-2xl font-bold mb-3 bg-linear-to-r from-blue-300 to-green-300 bg-clip-text">
+              <h3 className="text-white text-2xl font-bold mb-3 bg-linear-to-r from-cyan-300 to-purple-300 bg-clip-text">
                 Upload Image
               </h3>
               <p className="text-white/90 text-lg font-medium mb-4">
@@ -178,12 +178,12 @@ const Home = () => {
           ) : (
             <div className="text-center">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold bg-linear-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">
+                <h3 className="text-2xl font-bold bg-linear-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                   Selected Image
                 </h3>
                 <button
                   onClick={removeSelectedImage}
-                  className="bg-linear-to-r from-red-500/90 to-red-600/90 backdrop-blur-sm border-2 border-white/30 text-white px-6 py-3 rounded-xl hover:from-red-600/90 hover:to-red-700/90 transition-all duration-300 font-semibold shadow-lg hover:shadow-red-500/30 hover:scale-105"
+                  className="bg-linear-to-r from-red-500/90 to-red-600/90 backdrop-blur-sm border-2 border-white/30 text-white px-5 py-2 rounded-xl hover:from-red-600/90 hover:to-red-700/90 transition-all duration-300 font-semibold shadow-lg hover:shadow-red-500/30 hover:scale-105"
                 >
                   Delete
                 </button>
@@ -216,7 +216,7 @@ const Home = () => {
               <button
                 onClick={analyzeImage}
                 disabled={uploading}
-                className="bg-linear-to-r from-blue-500/90 to-green-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-10 py-4 rounded-2xl hover:from-blue-600/90 hover:to-green-600/90 transition-all duration-300 font-bold text-xl shadow-xl hover:shadow-green-500/30 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="custom-button bg-linear-to-r from-cyan-500/90 to-purple-500/90 backdrop-blur-sm border-0 text-white px-8 py-3 rounded-2xl hover:from-cyan-600/90 hover:to-purple-600/90 transition-all duration-300 font-bold text-lg shadow-xl hover:shadow-cyan-500/30 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {uploading ? "🔄 Analyzing..." : "🔍 Analyze Image"}
               </button>
@@ -227,7 +227,7 @@ const Home = () => {
                   onClick={() =>
                     document.getElementById("imageUpload2").click()
                   }
-                  className="bg-linear-to-r from-blue-500/90 to-green-500/90 backdrop-blur-sm border-2 border-white/30 text-white px-10 py-4 rounded-2xl hover:from-blue-600/90 hover:to-green-600/90 transition-all duration-300 font-bold text-xl shadow-xl hover:shadow-green-500/30 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="custom-button bg-linear-to-r from-cyan-500/90 to-purple-500/90 backdrop-blur-sm border-0 text-white px-8 py-3 rounded-2xl hover:from-cyan-600/90 hover:to-purple-600/90 transition-all duration-300 font-bold text-lg shadow-xl hover:shadow-cyan-500/30 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   Select Different Image
                 </button>
@@ -244,8 +244,8 @@ const Home = () => {
         </div>
 
         {/* Description */}
-        <div className="mt-8 bg-black/40 backdrop-blur-xl border-2 border-white/30 rounded-3xl p-6 shadow-xl hover:shadow-purple-500/20 transition-all duration-500">
-          <h3 className="text-xl font-bold text-white mb-4 text-center bg-linear-to-r from-purple-400 to-pink-400 bg-clip-text">
+        <div className="mt-8 bg-black/40 backdrop-blur-xl border-2 border-white/30 rounded-3xl p-6 shadow-xl hover:shadow-cyan-500/20 transition-all duration-500">
+          <h3 className="text-xl font-bold text-white mb-4 text-center bg-linear-to-r from-cyan-400 to-purple-400 bg-clip-text">
             🧠 Analyzed Based On
           </h3>
           <div className="grid md:grid-cols-4 gap-4 text-sm">

@@ -145,7 +145,7 @@ const SignUp = () => {
         // Show success message
         alert("Account created successfully! Redirecting to login...");
 
-        // Redirect to login or home
+        // Redirect to login 
         navigate("/login");
       } else {
         console.error("Signup failed:", result.error);
@@ -177,22 +177,10 @@ const SignUp = () => {
         backgroundAttachment: "fixed",
       }}
     >
-      {/* Animated background overlay */}
-      <div className="fixed inset-0 bg-linear-to-br from-green-900/30 via-blue-900/20 to-purple-900/30"></div>
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-[1px]"></div>
-
-      {/* Floating particles animation */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/5 w-2 h-2 bg-green-400/30 rounded-full animate-pulse delay-300"></div>
-        <div className="absolute top-2/3 right-1/5 w-1 h-1 bg-blue-400/40 rounded-full animate-bounce delay-1200"></div>
-        <div className="absolute bottom-1/3 left-2/5 w-3 h-3 bg-purple-400/20 rounded-full animate-ping delay-800"></div>
-        <div className="absolute top-1/4 right-2/5 w-2 h-2 bg-pink-400/25 rounded-full animate-pulse delay-500"></div>
-      </div>
-
-      <div className="relative z-10 flex justify-center items-start min-h-screen py-8">
+      <div className="flex justify-center items-start min-h-screen py-8">
         <div className="w-full max-w-md mx-4">
           {/* Main Form Container */}
-          <div className="w-full bg-black/60 rounded-2xl shadow-2xl border border-white/30 p-6 transform hover:scale-[1.01] transition-all duration-300">
+          <div className="w-full bg-black/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 p-6 transform hover:scale-[1.01] transition-all duration-300">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold mb-1 text-white">
                 Create Your Account
@@ -223,7 +211,7 @@ const SignUp = () => {
                   name="username"
                   type="text"
                   placeholder="Choose a username"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-green-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-cyan-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
                   value={formData.username}
                   onChange={handleInputChange}
                   required
@@ -249,7 +237,7 @@ const SignUp = () => {
                   name="email"
                   type="email"
                   placeholder="Enter email"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-green-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-cyan-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
                   value={formData.email}
                   onChange={handleInputChange}
                   required
@@ -275,7 +263,7 @@ const SignUp = () => {
                   name="confirmEmail"
                   type="email"
                   placeholder="Confirm email"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-green-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-cyan-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
                   value={formData.confirmEmail}
                   onChange={handleInputChange}
                   required
@@ -301,7 +289,7 @@ const SignUp = () => {
                   name="password"
                   type="password"
                   placeholder="Enter password"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-green-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-cyan-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
                   value={formData.password}
                   onChange={handleInputChange}
                   required
@@ -327,7 +315,7 @@ const SignUp = () => {
                   name="confirmPassword"
                   type="password"
                   placeholder="Confirm password"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-green-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-cyan-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   required
@@ -351,9 +339,8 @@ const SignUp = () => {
               </div>
             </div>
 
-            {/* Create Account Button */}
             <button
-              className="custom-button w-full bg-linear-to-r from-green-500 via-blue-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl border-0 hover:from-green-600 hover:via-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transform hover:scale-[1.01] hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
+              className="custom-button w-full bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl border-0 hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transform hover:scale-[1.01] hover:shadow-xl hover:shadow-cyan-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
               type="submit"
               disabled={loading}
             >
@@ -369,7 +356,6 @@ const SignUp = () => {
               )}
             </button>
 
-            {/* Links Section */}
             <div className="text-center space-y-3">
               <div className="flex items-center justify-center">
                 <div className="flex-1 h-px bg-white/20"></div>
@@ -380,7 +366,7 @@ const SignUp = () => {
               <p className="text-white/70 text-xs">
                 Already have an account?{" "}
                 <Link
-                  className="text-green-400 hover:text-green-300 font-semibold transition-colors duration-200 hover:underline"
+                  className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors duration-200 hover:underline"
                   to="/login"
                 >
                   Sign In

@@ -85,30 +85,17 @@ const Login = () => {
         backgroundAttachment: "fixed",
       }}
     >
-      {/* Animated background overlay */}
-      <div className="absolute inset-0 bg-linear-to-br from-blue-900/30 via-purple-900/20 to-pink-900/30"></div>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
-
-      {/* Floating particles animation */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-400/30 rounded-full animate-pulse"></div>
-        <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-purple-400/40 rounded-full animate-bounce delay-1000"></div>
-        <div className="absolute bottom-1/4 left-1/3 w-3 h-3 bg-pink-400/20 rounded-full animate-ping delay-500"></div>
-        <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-green-400/25 rounded-full animate-pulse delay-700"></div>
-      </div>
-
-      <div className="relative z-10 flex justify-center items-center min-h-screen py-8">
+      <div className="flex justify-center items-center min-h-screen py-8">
         <div className="w-full max-w-md mx-4">
-          {/* Title Section */}
+          {/* Header */}
           <div className="mb-6 text-center">
-            <h1 className="text-2xl font-bold bg-linear-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">
+            <h1 className="text-2xl font-bold bg-linear-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-1">
               AI Image Analyzer
             </h1>
-            <p className="text-white/70 text-xs">Discover the power of AI-driven image analysis</p>
           </div>
 
           {/* Main Form Container */}
-          <div className="w-full bg-black/60 rounded-2xl shadow-2xl border border-white/30 p-6 transform hover:scale-[1.01] transition-all duration-300">
+          <div className="w-full bg-black/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 p-6 transform hover:scale-[1.01] transition-all duration-300">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold mb-1 text-white">
               Welcome Back
@@ -140,7 +127,7 @@ const Login = () => {
                   name="email"
                   type="email"
                   placeholder="Enter your email"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-blue-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-cyan-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
                   value={formData.email}
                   onChange={handleInputChange}
                   required
@@ -166,7 +153,7 @@ const Login = () => {
                   name="password"
                   type="password"
                   placeholder="Enter your password"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-blue-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:bg-white/10 focus:border-cyan-400/50 focus:outline-none transition-all duration-300 hover:bg-white/8 text-sm"
                   value={formData.password}
                   onChange={handleInputChange}
                   required
@@ -181,7 +168,7 @@ const Login = () => {
 
             {/* Login Button */}
             <button
-              className="custom-button w-full bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-xl border-0 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transform hover:scale-[1.01] hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
+              className="custom-button w-full bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl border-0 hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transform hover:scale-[1.01] hover:shadow-xl hover:shadow-cyan-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
               type="submit"
               disabled={loading}
             >
@@ -197,10 +184,9 @@ const Login = () => {
               )}
             </button>
 
-            {/* Links Section */}
             <div className="space-y-3 text-center">
               <Link
-                className="block text-blue-400 hover:text-blue-300 transition-colors duration-200 text-xs font-medium hover:underline"
+                className="block text-cyan-400 hover:text-cyan-300 transition-colors duration-200 text-xs font-medium hover:underline"
                 to="/forgot-password"
               >
                 🔑 Forgot your password?
@@ -215,7 +201,7 @@ const Login = () => {
               <p className="text-white/70 text-xs">
                 Don't have an account?{" "}
                 <Link
-                  className="text-purple-400 hover:text-purple-300 font-semibold transition-colors duration-200 hover:underline"
+                  className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors duration-200 hover:underline"
                   to="/signup"
                 >
                   Create Account
