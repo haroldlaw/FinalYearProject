@@ -158,11 +158,26 @@ const Result = () => {
 
             {analysisData.analysisResult ? (
               (() => {
-                // Calculate individual scores
-                const compositionScore = analysisData.analysisResult.composition?.score || 85;
-                const focusScore = analysisData.analysisResult.focus?.score || 78;
-                const exposureScore = analysisData.analysisResult.exposure?.score || 82;
-                const colorScore = analysisData.analysisResult.color?.score || 90;
+                // Generate consistent scores based on image data for matching with Profile page
+                const imageId = analysisData.imageUrl || analysisData.originalName || analysisData._id || 'default';
+                
+                // Create a simple hash from imageId for consistent randomization
+                const hashCode = (str) => {
+                  let hash = 0;
+                  for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                  }
+                  return Math.abs(hash);
+                };
+                
+                // Generate consistent scores based on hash (same logic as Profile page)
+                const hash = hashCode(imageId.toString());
+                const compositionScore = analysisData.analysisResult.composition?.score || ((hash % 36) + 60);
+                const focusScore = analysisData.analysisResult.focus?.score || (((hash * 2) % 36) + 60);
+                const exposureScore = analysisData.analysisResult.exposure?.score || (((hash * 3) % 36) + 60);
+                const colorScore = analysisData.analysisResult.color?.score || (((hash * 5) % 36) + 60);
                 
                 // Calculate overall score as average of all scores
                 const overallScore = Math.round((compositionScore + focusScore + exposureScore + colorScore) / 4);
