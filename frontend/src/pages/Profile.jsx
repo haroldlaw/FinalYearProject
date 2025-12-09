@@ -11,7 +11,6 @@ const Profile = () => {
     user: authUser,
     isAuthenticated,
     loading: authLoading,
-    getUserHistory,
     logout,
   } = useAuth();
 
@@ -287,10 +286,12 @@ const Profile = () => {
                           return Math.abs(hash);
                         };
                         const hash = hashCode(imageId.toString());
-                        const compositionScore = img.compositionScore || ((hash % 36) + 60);
-                        const focusScore = img.focusScore || (((hash * 2) % 36) + 60);
-                        const exposureScore = img.exposureScore || (((hash * 3) % 36) + 60);
-                        const colorScore = img.colorScore || (((hash * 5) % 36) + 60);
+                        
+                        // Use AI analysis scores if available, otherwise use hash-based fallback
+                        const compositionScore = img.compositionScore !== null ? img.compositionScore : ((hash % 36) + 60);
+                        const focusScore = img.focusScore !== null ? img.focusScore : (((hash * 2) % 36) + 60);
+                        const exposureScore = img.exposureScore !== null ? img.exposureScore : (((hash * 3) % 36) + 60);
+                        const colorScore = img.colorScore !== null ? img.colorScore : (((hash * 5) % 36) + 60);
                         const overallScore = Math.round((compositionScore + focusScore + exposureScore + colorScore) / 4);
                         return sum + overallScore;
                       }, 0) / uploadHistory.length
@@ -335,7 +336,7 @@ const Profile = () => {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {uploadHistory.map((image, index) => {
-                // Calculate overall score for each image card 
+                // Use stored AI analysis scores if available, otherwise fallback to hash-based scores
                 const imageId = image.cloudinaryUrl || image.imageUrl || image.url || image._id || image.id || image.originalName || 'default';
                 
                 const hashCode = (str) => {
@@ -349,10 +350,12 @@ const Profile = () => {
                 };
                 
                 const hash = hashCode(imageId.toString());
-                const compositionScore = image.compositionScore || ((hash % 36) + 60);
-                const focusScore = image.focusScore || (((hash * 2) % 36) + 60);
-                const exposureScore = image.exposureScore || (((hash * 3) % 36) + 60);
-                const colorScore = image.colorScore || (((hash * 5) % 36) + 60);
+                
+                // Use AI analysis scores if available, otherwise use hash-based fallback
+                const compositionScore = image.compositionScore !== null ? image.compositionScore : ((hash % 36) + 60);
+                const focusScore = image.focusScore !== null ? image.focusScore : (((hash * 2) % 36) + 60);
+                const exposureScore = image.exposureScore !== null ? image.exposureScore : (((hash * 3) % 36) + 60);
+                const colorScore = image.colorScore !== null ? image.colorScore : (((hash * 5) % 36) + 60);
                 const overallScore = Math.round((compositionScore + focusScore + exposureScore + colorScore) / 4);
 
                 return (
@@ -480,8 +483,7 @@ const Profile = () => {
                 {/* Analysis and Details Grid */}
                 <div className="grid lg:grid-cols-3 gap-6">
                   {(() => {
-                    // Use stored scores if available, otherwise generate consistent scores based on image data
-                    // Use the same identifier logic as Result page for consistency
+                    // Use stored AI analysis scores if available, otherwise generate consistent scores based on image data
                     const imageId = selectedImage.cloudinaryUrl || selectedImage.imageUrl || selectedImage.url || selectedImage._id || selectedImage.id || selectedImage.originalName || 'default';
                     
                     // Create a simple hash from imageId for consistent randomization (same as Result page)
@@ -495,12 +497,12 @@ const Profile = () => {
                       return Math.abs(hash);
                     };
                     
-                    // Generate consistent scores based on hash (identical logic to Result page)
+                    // Use AI analysis scores if available, otherwise use hash-based fallback for consistency
                     const hash = hashCode(imageId.toString());
-                    const compositionScore = selectedImage.compositionScore || ((hash % 36) + 60);
-                    const focusScore = selectedImage.focusScore || (((hash * 2) % 36) + 60);
-                    const exposureScore = selectedImage.exposureScore || (((hash * 3) % 36) + 60);
-                    const colorScore = selectedImage.colorScore || (((hash * 5) % 36) + 60);
+                    const compositionScore = selectedImage.compositionScore !== null ? selectedImage.compositionScore : ((hash % 36) + 60);
+                    const focusScore = selectedImage.focusScore !== null ? selectedImage.focusScore : (((hash * 2) % 36) + 60);
+                    const exposureScore = selectedImage.exposureScore !== null ? selectedImage.exposureScore : (((hash * 3) % 36) + 60);
+                    const colorScore = selectedImage.colorScore !== null ? selectedImage.colorScore : (((hash * 5) % 36) + 60);
                     
                     // Calculate overall score as average of all component scores (same as Result page)
                     const overallScore = Math.round((compositionScore + focusScore + exposureScore + colorScore) / 4);

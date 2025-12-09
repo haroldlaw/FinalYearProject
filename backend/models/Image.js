@@ -40,6 +40,31 @@ const imageSchema = new mongoose.Schema({
     min: 0,
     max: 100,
     default: 0
+  },
+  // AI analysis component scores
+  compositionScore: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: null
+  },
+  focusScore: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: null
+  },
+  exposureScore: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: null
+  },
+  colorScore: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: null
   }
 }, {
   timestamps: true

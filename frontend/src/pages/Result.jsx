@@ -158,26 +158,41 @@ const Result = () => {
 
             {analysisData.analysisResult ? (
               (() => {
-                // Generate consistent scores based on image data for matching with Profile page
-                const imageId = analysisData.imageUrl || analysisData.originalName || analysisData._id || 'default';
+                // Use actual AI analysis scores when available, fallback to hash-based for consistency with Profile page
+                console.log('Result page - Analysis data:', analysisData.analysisResult);
                 
-                // Create a simple hash from imageId for consistent randomization
-                const hashCode = (str) => {
-                  let hash = 0;
-                  for (let i = 0; i < str.length; i++) {
-                    const char = str.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash = hash & hash; // Convert to 32bit integer
-                  }
-                  return Math.abs(hash);
-                };
+                // Check for real AI analysis scores 
+                const hasAIScores = analysisData.analysisResult.compositionScore !== undefined;
                 
-                // Generate consistent scores based on hash (same logic as Profile page)
-                const hash = hashCode(imageId.toString());
-                const compositionScore = analysisData.analysisResult.composition?.score || ((hash % 36) + 60);
-                const focusScore = analysisData.analysisResult.focus?.score || (((hash * 2) % 36) + 60);
-                const exposureScore = analysisData.analysisResult.exposure?.score || (((hash * 3) % 36) + 60);
-                const colorScore = analysisData.analysisResult.color?.score || (((hash * 5) % 36) + 60);
+                let compositionScore, focusScore, exposureScore, colorScore;
+                
+                if (hasAIScores) {
+                  // Use real AI analysis scores 
+                  compositionScore = analysisData.analysisResult.compositionScore || 0;
+                  focusScore = analysisData.analysisResult.focusScore || 0;
+                  exposureScore = analysisData.analysisResult.exposureScore || 0;
+                  colorScore = analysisData.analysisResult.colorScore || 0;
+                  console.log('Using AI scores - Composition:', compositionScore, 'Focus:', focusScore, 'Exposure:', exposureScore, 'Color:', colorScore);
+                } else {
+                  // Fallback to hash-based scores for consistency with Profile page
+                  const imageId = analysisData.imageUrl || analysisData.originalName || analysisData._id || 'default';
+                  const hashCode = (str) => {
+                    let hash = 0;
+                    for (let i = 0; i < str.length; i++) {
+                      const char = str.charCodeAt(i);
+                      hash = ((hash << 5) - hash) + char;
+                      hash = hash & hash; // Convert to 32bit integer
+                    }
+                    return Math.abs(hash);
+                  };
+                  
+                  const hash = hashCode(imageId.toString());
+                  compositionScore = (hash % 36) + 60;
+                  focusScore = ((hash * 2) % 36) + 60;
+                  exposureScore = ((hash * 3) % 36) + 60;
+                  colorScore = ((hash * 5) % 36) + 60;
+                  console.log('Using hash-based scores - Composition:', compositionScore, 'Focus:', focusScore, 'Exposure:', exposureScore, 'Color:', colorScore);
+                }
                 
                 // Calculate overall score as average of all scores
                 const overallScore = Math.round((compositionScore + focusScore + exposureScore + colorScore) / 4);
@@ -329,26 +344,32 @@ const Result = () => {
                         Recommendations
                       </h4>
                       <div className="space-y-3 text-sm text-white/90">
-                        {analysisData.analysisResult.recommendations ? (
-                          analysisData.analysisResult.recommendations
-                            .slice(0, 3)
-                            .map((rec, index) => (
+                        {analysisData.analysisResult.recommendations && analysisData.analysisResult.recommendations.length > 0 ? (
+                          (() => {
+                            console.log('Displaying AI recommendations:', analysisData.analysisResult.recommendations);
+                            return analysisData.analysisResult.recommendations
+                              .slice(0, 3)
+                              .map((rec, index) => (
+                                <div key={index} className="flex items-start bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-indigo-400/30 transition-colors">
+                                  <span className="mr-3 text-blue-400 text-lg">•</span>
+                                  <p className="flex-1 leading-relaxed">{rec}</p>
+                                </div>
+                              ));
+                          })()
+                        ) : (
+                          (() => {
+                            console.log('No AI recommendations available, using generic recommendations');
+                            return [
+                              "Consider experimenting with different angles for more dynamic composition",
+                              "Try adjusting exposure slightly to enhance detail in shadows",
+                              "The current color balance works well for this subject matter"
+                            ].map((rec, index) => (
                               <div key={index} className="flex items-start bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-indigo-400/30 transition-colors">
                                 <span className="mr-3 text-blue-400 text-lg">•</span>
                                 <p className="flex-1 leading-relaxed">{rec}</p>
                               </div>
-                            ))
-                        ) : (
-                          [
-                            "Consider experimenting with different angles for more dynamic composition",
-                            "Try adjusting exposure slightly to enhance detail in shadows",
-                            "The current color balance works well for this subject matter"
-                          ].map((rec, index) => (
-                            <div key={index} className="flex items-start bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-indigo-400/30 transition-colors">
-                              <span className="mr-3 text-blue-400 text-lg">•</span>
-                              <p className="flex-1 leading-relaxed">{rec}</p>
-                            </div>
-                          ))
+                            ));
+                          })()
                         )}
                       </div>
                     </div>
