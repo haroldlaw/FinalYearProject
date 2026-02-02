@@ -303,7 +303,7 @@ const Profile = () => {
         </div>
 
         {/* Upload History */}
-        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-6 hover:shadow-cyan-500/30 transition-all duration-500">
+        <div className="bg-black/50 backdrop-blur-xl border-2 border-white/40 rounded-3xl shadow-2xl p-6 hover:shadow-cyan-500/30 transition-all duration-500 max-h-[calc(100vh-22rem)] overflow-y-auto scrollbar-hidden">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-white flex items-center">
               <span className="text-3xl mr-3">📚</span>
@@ -318,7 +318,7 @@ const Profile = () => {
           )}
 
           {uploadHistory.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-2">
               <div className="text-6xl mb-4">📷</div>
               <h3 className="text-white text-xl font-bold mb-2">
                 No upload yet

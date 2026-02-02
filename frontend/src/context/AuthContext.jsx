@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
       if (response?.success) {
         setUser(response.data);
         setIsAuthenticated(true);
-        console.log('✅ User authenticated:', response.data);
+        console.log('User authenticated:', response.data);
       } else {
         setUser(null);
         setIsAuthenticated(false);
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
         const userData = response.data.user || response.data;
         setUser(userData);
         setIsAuthenticated(true);
-        console.log('🎉 Login successful:', userData);
+        console.log('Login successful:', userData);
         return { success: true, data: userData };
       } else {
         return { success: false, error: response.error };
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }) => {
         const user = response.data.user || response.data;
         setUser(user);
         setIsAuthenticated(true);
-        console.log('🎉 Signup successful:', user);
+        console.log('Signup successful:', user);
         return { success: true, data: user };
       } else {
         return { success: false, error: response.error };
@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
       await authAPI.logout();
       setUser(null);
       setIsAuthenticated(false);
-      console.log('👋 Logout successful');
+      console.log('Logout successful');
     } catch (error) {
       console.error('Logout error:', error);
       setUser(null);

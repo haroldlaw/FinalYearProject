@@ -185,7 +185,6 @@ router.get('/history', authenticateToken, async (req, res) => {
   }
 });
 
-
 // Delete user image
 router.delete('/images/:imageId', authenticateToken, async (req, res) => {
   try {
