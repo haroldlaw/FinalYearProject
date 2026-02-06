@@ -35,3 +35,16 @@ credentials.json
 *.json
 !package.json
 !package-lock.json
+
+# Datasets (too large for git)
+datasets/
+*.zip
+*.tar
+*.tar.gz
+archive/
+
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+*.pyc
