@@ -48,3 +48,13 @@ archive/
 venv/
 __pycache__/
 *.pyc
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# Training outputs
+ai-service/outputs/
+*.pth
+*.pkl
+*.h5
