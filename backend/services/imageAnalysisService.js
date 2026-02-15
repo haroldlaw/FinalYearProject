@@ -1,4 +1,8 @@
 const vision = require('@google-cloud/vision');
+const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
 // Initialize the Vision API client
 let visionClient;
@@ -20,7 +24,268 @@ try {
   initializationStatus = 'INIT_ERROR';
 }
 
- // Analyze image composition using rule of thirds and visual balance
+// ============================================================================
+// CUSTOM AI MODEL FUNCTIONS
+// ============================================================================
+
+const callPhotographyModel = (imageBuffer) => {
+  return new Promise((resolve, reject) => {
+    const modelPath = path.join(__dirname, '../python_service/photography_evaluator.py');
+    const pythonPath = process.env.PYTHON_PATH || 'python3';
+    
+    // Create temporary file instead of using command line argument
+    const tempDir = os.tmpdir();
+    const tempImagePath = path.join(tempDir, `temp_image_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.jpg`);
+    
+    try {
+      // Write image buffer to temporary file
+      fs.writeFileSync(tempImagePath, imageBuffer);
+      
+      console.log(`📁 Created temp file: ${tempImagePath} (${imageBuffer.length} bytes)`);
+      
+      // Pass temp file path instead of base64 data
+      const pythonProcess = spawn(pythonPath, [modelPath, tempImagePath], {
+        env: { ...process.env, CUSTOM_MODEL_PATH: process.env.CUSTOM_MODEL_PATH }
+      });
+      
+      let result = '';
+      let error = '';
+      
+      pythonProcess.stdout.on('data', (data) => {
+        result += data.toString();
+      });
+      
+      pythonProcess.stderr.on('data', (data) => {
+        error += data.toString();
+      });
+      
+      pythonProcess.on('close', (code) => {
+        // Clean up temporary file
+        try {
+          if (fs.existsSync(tempImagePath)) {
+            fs.unlinkSync(tempImagePath);
+            console.log(`🗑️  Cleaned up temp file: ${tempImagePath}`);
+          }
+        } catch (cleanupError) {
+          console.error('⚠️  Failed to cleanup temp file:', cleanupError.message);
+        }
+        
+        if (code === 0) {
+          try {
+            const modelOutput = JSON.parse(result);
+            resolve(modelOutput);
+          } catch (e) {
+            reject(new Error(`Failed to parse model output: ${e.message}`));
+          }
+        } else {
+          reject(new Error(`Model execution failed (code ${code}): ${error}`));
+        }
+      });
+      
+      pythonProcess.on('error', (err) => {
+        // Clean up on process error
+        try {
+          if (fs.existsSync(tempImagePath)) {
+            fs.unlinkSync(tempImagePath);
+          }
+        } catch (cleanupError) {
+          console.error('⚠️  Failed to cleanup temp file on error:', cleanupError.message);
+        }
+        reject(err);
+      });
+      
+      const timeout = parseInt(process.env.MODEL_TIMEOUT) || 15000;
+      setTimeout(() => {
+        pythonProcess.kill();
+        // Clean up on timeout
+        try {
+          if (fs.existsSync(tempImagePath)) {
+            fs.unlinkSync(tempImagePath);
+          }
+        } catch (cleanupError) {
+          console.error('⚠️  Failed to cleanup temp file on timeout:', cleanupError.message);
+        }
+        reject(new Error('Model execution timeout'));
+      }, timeout);
+      
+    } catch (fileError) {
+      reject(new Error(`Failed to create temporary file: ${fileError.message}`));
+    }
+  });
+};
+
+const getAestheticRating = (score) => {
+  if (score >= 90) return 'Exceptional';
+  if (score >= 80) return 'Excellent';
+  if (score >= 70) return 'Very Good';
+  if (score >= 60) return 'Good';
+  if (score >= 50) return 'Average';
+  if (score >= 40) return 'Below Average';
+  return 'Needs Improvement';
+};
+
+const getCompositionAnalysis = (score) => ({
+  ruleOfThirds: score >= 80 ? "Well Applied" : score >= 60 ? "Partially Applied" : "Needs Improvement",
+  balance: score >= 80 ? "Well Balanced" : score >= 60 ? "Balanced" : "Unbalanced",
+  leadingLines: score >= 75 ? "Effective" : score >= 60 ? "Present" : "Subtle",
+  symmetry: score >= 85 ? "Excellent" : score >= 70 ? "Good" : "Fair"
+});
+
+const getFocusAnalysis = (score) => ({
+  sharpness: score >= 85 ? "Very Sharp" : score >= 70 ? "Sharp" : "Slightly Soft",
+  depthOfField: score >= 80 ? "Excellent" : score >= 60 ? "Appropriate" : "Needs Work",
+  focusPoint: score >= 75 ? "Well Placed" : score >= 60 ? "Acceptable" : "Off-Target"
+});
+
+const getExposureAnalysis = (score) => ({
+  level: score >= 85 ? "Perfect" : score >= 70 ? "Well Exposed" : "Needs Adjustment",
+  highlights: score >= 80 ? "Well Controlled" : score >= 60 ? "Preserved" : "Blown",
+  shadows: score >= 75 ? "Detailed" : score >= 60 ? "Acceptable" : "Too Dark",
+  dynamicRange: score >= 80 ? "Excellent" : score >= 60 ? "Good" : "Limited"
+});
+
+const getColorAnalysis = (score) => ({
+  whiteBalance: score >= 80 ? "Natural" : score >= 60 ? "Good" : "Needs Adjustment",
+  contrast: score >= 85 ? "Perfect" : score >= 70 ? "Balanced" : "Low",
+  saturation: score >= 80 ? "Rich" : score >= 60 ? "Natural" : "Flat"
+});
+
+const generateModelBasedRecommendations = (aestheticScore, modelResults) => {
+  const recommendations = [];
+  
+  // Score-based recommendations
+  if (aestheticScore < 50) {
+    recommendations.push("Focus on basic photography fundamentals: proper exposure, sharp focus, and clear composition");
+  } else if (aestheticScore < 60) {
+    recommendations.push("Good start! Work on composition techniques like rule of thirds and leading lines");
+  } else if (aestheticScore < 75) {
+    recommendations.push("Solid foundation! Experiment with creative angles, lighting, and depth of field");
+  } else if (aestheticScore < 85) {
+    recommendations.push("Strong technical skills! Consider exploring more artistic elements and emotional storytelling");
+  } else {
+    recommendations.push("Exceptional work! Continue pushing creative boundaries and developing your unique style");
+  }
+  
+  // Add specific technical recommendations
+  if (modelResults.focus_score < modelResults.aesthetic_score - 10) {
+    recommendations.push("Pay attention to focus accuracy and sharpness for better impact");
+  }
+  if (modelResults.composition_score < modelResults.aesthetic_score - 10) {
+    recommendations.push("Strengthen composition by applying rule of thirds and visual balance principles");
+  }
+  if (modelResults.exposure_score < modelResults.aesthetic_score - 10) {
+    recommendations.push("Improve exposure control to better capture highlight and shadow detail");
+  }
+  
+  // Confidence-based recommendations
+  if (modelResults.confidence < 70) {
+    recommendations.push("Consider retaking the shot with better lighting or different angle for clearer evaluation");
+  }
+  
+  return recommendations.slice(0, 3);
+};
+
+// ============================================================================
+// CUSTOM AI ANALYSIS FUNCTION
+// ============================================================================
+
+const analyzeImageWithCustomAI = async (imageBuffer, filename = 'unknown') => {
+  console.log(`\n ========== CUSTOM AI ANALYSIS FOR: ${filename} ==========`);
+  console.log(`Using Custom Photography AI Model`);
+  console.log(`Image Buffer Size: ${imageBuffer ? imageBuffer.length : 0} bytes`);
+  
+  try {
+    const startTime = Date.now();
+    
+    // Call your Python model
+    const modelResults = await callPhotographyModel(imageBuffer);
+    
+    const processingTime = Date.now() - startTime;
+    
+    console.log(`CUSTOM AI ANALYSIS COMPLETE for ${filename}`);
+    console.log(`Model Results:`, modelResults);
+    
+    // Handle error from Python model
+    if (modelResults.error) {
+      throw new Error(`Model error: ${modelResults.error}`);
+    }
+    
+    // Use your model's aesthetic score as the primary metric
+    const aestheticScore = modelResults.aesthetic_score || 50;
+    const compositionScore = modelResults.composition_score || aestheticScore;
+    const focusScore = modelResults.focus_score || aestheticScore;
+    const exposureScore = modelResults.exposure_score || aestheticScore;
+    const colorScore = modelResults.color_score || aestheticScore;
+    const overallScore = Math.round(aestheticScore);
+    
+    // Generate comprehensive analysis using your model's output
+    const analysisResult = {
+      // Overall scores from YOUR trained model
+      overallScore,
+      aestheticScore,
+      compositionScore,
+      focusScore,
+      exposureScore,
+      colorScore,
+      
+      // Mark as your custom AI analysis
+      analysisMethod: 'CUSTOM_AI',
+      analysisSource: 'Custom Photography Evaluation Model',
+      
+      // AI Analysis Data from your model
+      aiAnalysis: {
+        modelOutput: modelResults,
+        aestheticRating: getAestheticRating(aestheticScore),
+        modelConfidence: modelResults.confidence || 80,
+        trainingDataset: '255K Professional Photos',
+        architecture: 'ResNet50-based CNN',
+        modelVersion: 'v1.0',
+        trainingEpochs: 17
+      },
+      
+      // Technical details
+      confidence: modelResults.confidence || 80,
+      analysisDate: new Date(),
+      processingTime,
+      
+      // Detailed analysis based on aesthetic score
+      composition: getCompositionAnalysis(compositionScore),
+      focus: getFocusAnalysis(focusScore),
+      exposure: getExposureAnalysis(exposureScore),
+      color: getColorAnalysis(colorScore),
+      
+      // Generate recommendations based on your model's output
+      recommendations: generateModelBasedRecommendations(aestheticScore, modelResults),
+      
+      // Model-specific properties
+      imageProperties: {
+        aestheticScore: aestheticScore,
+        modelVersion: 'v1.0',
+        trainingEpochs: 17,
+        format: 'AI-optimized',
+        quality: 'Professional-grade analysis'
+      }
+    };
+
+    console.log(`Custom AI analysis completed successfully for ${filename}`);
+    console.log(`Aesthetic Score: ${aestheticScore}/100`);
+    console.log(`Processing Time: ${processingTime}ms`);
+    console.log(`========== ANALYSIS COMPLETE FOR: ${filename} ==========\n`);
+    
+    return analysisResult;
+
+  } catch (error) {
+    console.error(`Custom AI Analysis failed for ${filename}: ${error.message}`);
+    // Fallback to Google Vision if custom model fails
+    return analyzeImageWithGoogleVision(imageBuffer, filename);
+  }
+};
+
+// ============================================================================
+// GOOGLE VISION API ANALYSIS FUNCTIONS
+// ============================================================================
+
+// Analyze image composition using rule of thirds and visual balance
 const analyzeComposition = (faces, objects, landmarks) => {
   let score = 0; // Start from 0
   
@@ -81,8 +346,6 @@ const analyzeFocus = (imageProperties, objects) => {
     // Additional focus indicators
     if (objects.length > 3) {
       score += 20; // Multiple clear objects indicate excellent focus
-    } else if (objects.length > 1) {
-      score += 0; // Already counted in base score
     }
   } else {
     // If no objects detected, assume moderate focus
@@ -183,22 +446,19 @@ const analyzeColor = (colors, imageProperties) => {
   return Math.min(100, Math.max(0, score));
 };
 
-// Main function to analyze image using Google Vision API
-const analyzeImageWithAI = async (imageBuffer, filename = 'unknown') => {
-  console.log(`\n ========== STARTING ANALYSIS FOR: ${filename} ==========`);
+// Google Vision Analysis (as fallback)
+const analyzeImageWithGoogleVision = async (imageBuffer, filename = 'unknown') => {
+  console.log(`\n ========== GOOGLE VISION ANALYSIS FOR: ${filename} ==========`);
   console.log(`Vision Client Status: ${initializationStatus}`);
-  console.log(`Vision Client Available: ${!!visionClient}`);
   console.log(`Image Buffer Size: ${imageBuffer ? imageBuffer.length : 0} bytes`);
   
   try {
     if (!visionClient) {
       console.log(`USING MOCK ANALYSIS - Google Vision API not available for: ${filename}`);
-      console.log(`Reason: Vision client not initialized (Status: ${initializationStatus})`);
       throw new Error('Google Vision API not available');
     }
 
-    console.log(`USING REAL AI ANALYSIS - Starting Google Vision API analysis for: ${filename}`);
-    console.log(`Analysis started at: ${new Date().toISOString()}`);
+    console.log(`USING GOOGLE VISION API analysis for: ${filename}`);
 
     // Perform multiple types of analysis
     const [
@@ -222,11 +482,10 @@ const analyzeImageWithAI = async (imageBuffer, filename = 'unknown') => {
     const logos = logoResult[0].logoAnnotations || [];
     const colors = imageProperties.dominantColors?.colors || [];
 
-    console.log(`REAL AI ANALYSIS COMPLETE for ${filename}`);
-    console.log(`Analysis Results: ${labels.length} labels, ${faces.length} faces, ${objects.length} objects`);
-    console.log(`Analysis completed at: ${new Date().toISOString()}`);
+    console.log(`GOOGLE VISION ANALYSIS COMPLETE for ${filename}`);
+    console.log(`Results: ${labels.length} labels, ${faces.length} faces, ${objects.length} objects`);
 
-    // Calculate scores using AI analysis data
+    // Calculate scores using Google Vision data
     const compositionScore = analyzeComposition(faces, objects, labels);
     const focusScore = analyzeFocus(imageProperties, objects);
     const exposureScore = analyzeExposure(imageProperties, colors);
@@ -242,8 +501,8 @@ const analyzeImageWithAI = async (imageBuffer, filename = 'unknown') => {
       exposureScore,
       colorScore,
       
-      // Mark as real AI analysis
-      analysisMethod: 'REAL_AI',
+      // Mark as Google Vision analysis
+      analysisMethod: 'GOOGLE_VISION',
       analysisSource: 'Google Cloud Vision API',
       
       // AI Analysis Data
@@ -272,7 +531,7 @@ const analyzeImageWithAI = async (imageBuffer, filename = 'unknown') => {
         (objects[0]?.score || 0.5)
       ) * 50),
       analysisDate: new Date(),
-      processingTime: Math.floor(Math.random() * 2000) + 1500, // Simulated processing time
+      processingTime: Math.floor(Math.random() * 2000) + 1500,
       
       // Detailed analysis categories
       composition: {
@@ -301,7 +560,7 @@ const analyzeImageWithAI = async (imageBuffer, filename = 'unknown') => {
         saturation: colors.length >= 3 ? "Rich" : "Moderate"
       },
       
-      // AI-generated recommendations
+      // Google Vision recommendations
       recommendations: generateRecommendations(compositionScore, focusScore, exposureScore, colorScore, labels, faces, objects),
       
       // Image properties
@@ -314,16 +573,12 @@ const analyzeImageWithAI = async (imageBuffer, filename = 'unknown') => {
       }
     };
 
-    console.log(`REAL AI analysis completed successfully for ${filename}`);
-    console.log(`Final Scores - Overall: ${overallScore}/100, Composition: ${compositionScore}/100, Focus: ${focusScore}/100, Exposure: ${exposureScore}/100, Color: ${colorScore}/100`);
+    console.log(`Google Vision analysis completed for ${filename}`);
     console.log(`========== ANALYSIS COMPLETE FOR: ${filename} ==========\n`);
     return analysisResult;
 
   } catch (error) {
-    console.error(`REAL AI Analysis failed for ${filename}, falling back to mock analysis`);
-    console.error(`Error Details: ${error.message}`);
-    console.error(`Error Code: ${error.code || 'N/A'}`);
-    console.log(`Switching to MOCK ANALYSIS for: ${filename}`);
+    console.error(`Google Vision Analysis failed for ${filename}: ${error.message}`);
     return generateFallbackAnalysis(filename);
   }
 };
@@ -331,11 +586,10 @@ const analyzeImageWithAI = async (imageBuffer, filename = 'unknown') => {
 // Generate AI-powered recommendations based on scores and analysis data
 const generateRecommendations = (compositionScore, focusScore, exposureScore, colorScore, labels, faces, objects) => {
   console.log(`Generating recommendations based on scores: Comp=${compositionScore}, Focus=${focusScore}, Exp=${exposureScore}, Color=${colorScore}`);
-  console.log(`AI Detection data: ${labels?.length || 0} labels, ${faces?.length || 0} faces, ${objects?.length || 0} objects`);
   
   const recommendations = [];
   
-  // Score-based recommendations with updated thresholds
+  // Score-based recommendations
   if (compositionScore < 65) {
     recommendations.push("Try using the rule of thirds - position key subjects along the grid lines for better composition");
   }
@@ -372,29 +626,26 @@ const generateRecommendations = (compositionScore, focusScore, exposureScore, co
     recommendations.push("Excellent technical execution! Try experimenting with creative angles or lighting for artistic effect");
   }
   
-  if (exposureScore < 60 && colorScore < 60) {
-    recommendations.push("Consider shooting in RAW format to have more flexibility in post-processing exposure and color");
-  }
-  
   // Default recommendation if no specific issues found
   if (recommendations.length === 0) {
     recommendations.push("Well-composed image! Continue exploring different subjects and lighting conditions");
   }
   
-  // Return top 3 recommendations
-  console.log(`Generated ${recommendations.length} recommendations: ${recommendations.map(r => `"${r.substring(0, 30)}..."`).join(', ')}`);
   return recommendations.slice(0, 3);
 };
 
+// ============================================================================
+// FALLBACK ANALYSIS
+// ============================================================================
+
 // Fallback analysis when AI is not available
 const generateFallbackAnalysis = (filename = 'unknown') => {
-  console.log(`\n ========== GENERATING MOCK ANALYSIS FOR: ${filename} ==========`);
+  console.log(`\n ========== GENERATING FALLBACK ANALYSIS FOR: ${filename} ==========`);
   console.log(`Reason: Using fallback due to AI unavailability`);
-  console.log(`Mock analysis started at: ${new Date().toISOString()}`);
   
   // Generate realistic photography scores (0-100 range)
-  const base = 0;
-  const variance = 100;
+  const base = 40;
+  const variance = 40;
   
   const compositionScore = base + Math.floor(Math.random() * variance);
   const focusScore = base + Math.floor(Math.random() * variance);
@@ -402,13 +653,13 @@ const generateFallbackAnalysis = (filename = 'unknown') => {
   const colorScore = base + Math.floor(Math.random() * variance);
   const overallScore = Math.round((compositionScore + focusScore + exposureScore + colorScore) / 4);
   
-  console.log(`Mock Scores - Overall: ${overallScore}/100, Composition: ${compositionScore}/100, Focus: ${focusScore}/100, Exposure: ${exposureScore}/100, Color: ${colorScore}/100`);
-  console.log(`========== MOCK ANALYSIS COMPLETE FOR: ${filename} ==========\n`);
+  console.log(`Fallback Scores - Overall: ${overallScore}/100`);
+  console.log(`========== FALLBACK ANALYSIS COMPLETE FOR: ${filename} ==========\n`);
   
   return {
-    // Mark as mock analysis
-    analysisMethod: 'MOCK',
-    analysisSource: 'Fallback Mock Analysis',
+    // Mark as fallback analysis
+    analysisMethod: 'FALLBACK',
+    analysisSource: 'Fallback Analysis (No AI Available)',
     
     overallScore,
     compositionScore,
@@ -416,15 +667,15 @@ const generateFallbackAnalysis = (filename = 'unknown') => {
     exposureScore,
     colorScore,
     aiAnalysis: {
-      labels: [{ description: "Image analysis", confidence: 85 }],
+      labels: [{ description: "Basic image analysis", confidence: 70 }],
       faces: 0,
       objects: [],
       logos: [],
       dominantColors: []
     },
-    confidence: 75 + Math.floor(Math.random() * 20),
+    confidence: 60 + Math.floor(Math.random() * 20),
     analysisDate: new Date(),
-    processingTime: 1500 + Math.floor(Math.random() * 1000),
+    processingTime: 500 + Math.floor(Math.random() * 500),
     composition: {
       ruleOfThirds: ["Well Applied", "Partially Applied", "Needs Improvement"][Math.floor(Math.random() * 3)],
       balance: ["Well Balanced", "Balanced", "Slightly Unbalanced"][Math.floor(Math.random() * 3)],
@@ -457,11 +708,39 @@ const generateFallbackAnalysis = (filename = 'unknown') => {
       height: 'Auto-detected', 
       format: 'auto-optimized',
       colorSpace: 'sRGB',
-      quality: 'Enhanced analysis'
+      quality: 'Basic analysis'
     }
   };
 };
 
+// ============================================================================
+// MAIN ANALYSIS FUNCTION - CHOOSES BETWEEN CUSTOM AI AND GOOGLE VISION
+// ============================================================================
+
+const analyzeImageWithAI = async (imageBuffer, filename = 'unknown') => {
+  const useCustomModel = process.env.USE_CUSTOM_MODEL === 'true';
+  
+  console.log(`\n🔍 ANALYSIS DECISION FOR: ${filename}`);
+  console.log(`USE_CUSTOM_MODEL: ${useCustomModel}`);
+  console.log(`Google Vision Status: ${initializationStatus}`);
+  
+  if (useCustomModel) {
+    console.log(`✨ Using CUSTOM AI MODEL for: ${filename}`);
+    // Try custom AI first
+    return analyzeImageWithCustomAI(imageBuffer, filename);
+  } else {
+    console.log(`🌐 Using GOOGLE VISION API for: ${filename}`);
+    // Use Google Vision
+    return analyzeImageWithGoogleVision(imageBuffer, filename);
+  }
+};
+
+// ============================================================================
+// MODULE EXPORTS
+// ============================================================================
+
 module.exports = {
-  analyzeImageWithAI
+  analyzeImageWithAI,                // Main function (switches based on USE_CUSTOM_MODEL)
+  analyzeImageWithCustomAI,          // Force custom AI
+  analyzeImageWithGoogleVision       // Force Google Vision
 };
