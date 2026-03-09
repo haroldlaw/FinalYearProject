@@ -268,7 +268,6 @@ const analyzeImageWithCustomAI = async (imageBuffer, filename = 'unknown') => {
     };
 
     console.log(`Custom AI analysis completed successfully for ${filename}`);
-    console.log(`Aesthetic Score: ${aestheticScore}/100`);
     console.log(`Processing Time: ${processingTime}ms`);
     console.log(`========== ANALYSIS COMPLETE FOR: ${filename} ==========\n`);
     

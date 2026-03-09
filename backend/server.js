@@ -1,4 +1,5 @@
 require('dotenv').config()
+console.log('Starting server...')
 
 const express = require('express')
 const cors = require('cors')
@@ -37,8 +38,8 @@ app.use((req, res, next) => {
   next()
 })
 
-// Connect to database
-connectDB()
+// Connect to database (non-blocking)
+connectDB().catch(err => console.error('DB connection failed:', err))
 
 // Routes
 app.use('/api/users', userRoutes)
@@ -59,6 +60,7 @@ app.use((err, req, res, next) => {
 })
 
 const PORT = process.env.PORT || 9000
+console.log('About to start listening on port', PORT)
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
