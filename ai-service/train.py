@@ -1,89 +1,150 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR
-import numpy as np
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-import time
-import json
-import os
-from pathlib import Path
+from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR, CosineAnnealingLR
 import argparse
+import json
+import time
+from pathlib import Path
 from datetime import datetime
+from tqdm import tqdm
+import numpy as np
 
 from dataset import create_data_loaders
-from model import create_model, AestheticLoss
+from model import create_model, MultiAttributeLoss
 
-class ModelTrainer:
-    """
-    Complete training pipeline for photography evaluation model.
-    """
 
+def get_default_config(backbone='resnet50'):
+    """Get default training configuration based on backbone type."""
+    
+    # Base config
+    config = {
+        # AADB paths
+        'train_labels_path': '../datasets/AADB/imgListFiles_label/aesthetics_image_lists/train_labels.txt',
+        'test_labels_path': '../datasets/AADB/imgListFiles_label/aesthetics_image_lists/test_labels.txt',
+        'images_path': '../datasets/AADB/datasetImages_originalSize',
+        'output_dir': 'outputs/aadb',
+        
+        # Model
+        'backbone': backbone,
+        'pretrained': True,
+        
+        # Training
+        'epochs': 50,
+        'batch_size': 16,
+        'gradient_clip': 1.0,
+        
+        # Data
+        'val_split': 0.15,
+        'num_workers': 4,
+        'random_seed': 42
+    }
+    
+    # ViT-specific defaults (standard practice for Vision Transformers)
+    if backbone.startswith('vit_'):
+        config.update({
+            'optimizer': 'adamw',
+            'learning_rate': 3e-4,  # Slightly higher for ViT
+            'weight_decay': 0.05,   # Higher for ViT
+            'scheduler': 'cosine',
+        })
+    # CNN defaults (ResNet, EfficientNet)
+    else:
+        config.update({
+            'optimizer': 'adam',
+            'learning_rate': 1e-4,
+            'weight_decay': 1e-4,
+            'scheduler': 'reduce_on_plateau',
+        })
+    
+    return config
+
+
+class Trainer:
+    """Training manager for photography evaluation model."""
+    
     def __init__(self, config):
-        """
-        Initialize trainer with configuration.
-
-        Args:
-            config (dict): Training configuration
-        """
         self.config = config
-        if torch.backends.mps.is_available():
-            self.device = torch.device('mps')
-            print("Using Apple Metal Performance Shaders (MPS) for GPU acceleration")
-        elif torch.cuda.is_available():
-            self.device = torch.device('cuda')
-            print("Using NVIDIA CUDA for GPU acceleration")
-        else:
-            self.device = torch.device('cpu')
-            print("Using CPU")
+        self.device = self._setup_device()
+        self.output_dir = Path(config['output_dir'])
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Set random seed
+        torch.manual_seed(config['random_seed'])
+        np.random.seed(config['random_seed'])
+        
+        # Setup components
+        self.setup_data_loaders()
+        self.setup_model()
+        self.setup_optimizer()
+        self.setup_scheduler()
+        
+        # Training state
+        self.current_epoch = 0
         self.best_val_loss = float('inf')
         self.train_losses = []
         self.val_losses = []
-        self.learning_rates = []
-
-        # Create output directory
-        self.output_dir = Path(config['output_dir'])
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-
-        print(f"Trainer initialized:")
-        print(f"  Device: {self.device}")
-        print(f"  Output directory: {self.output_dir}")
-
+        
+        # Save config
+        with open(self.output_dir / 'config.json', 'w') as f:
+            json.dump(config, f, indent=2)
+        
+        print(f"\n{'='*60}")
+        print(f"Trainer initialized")
+        print(f"Output directory: {self.output_dir}")
+        print(f"Device: {self.device}")
+        print(f"{'='*60}\n")
+    
+    def _setup_device(self):
+        """Setup compute device (MPS/CUDA/CPU)."""
+        if torch.backends.mps.is_available():
+            device = torch.device('mps')
+            print("✅ Using Apple Silicon GPU (MPS)")
+        elif torch.cuda.is_available():
+            device = torch.device('cuda')
+            print(f"✅ Using CUDA GPU: {torch.cuda.get_device_name(0)}")
+        else:
+            device = torch.device('cpu')
+            print("⚠️  Using CPU (training will be slow)")
+        return device
+    
     def setup_data_loaders(self):
-        """Setup train/validation/test data loaders."""
-        print("Setting up data loaders...")
-
+        """Setup AADB data loaders."""
+        print("Setting up AADB data loaders...")
+        
         self.train_loader, self.val_loader, self.test_loader, self.split_info = create_data_loaders(
-            csv_path=self.config['csv_path'],
+            train_labels_path=self.config['train_labels_path'],
+            test_labels_path=self.config['test_labels_path'],
             images_path=self.config['images_path'],
             batch_size=self.config['batch_size'],
-            val_split=self.config['val_split'],
-            test_split=self.config['test_split'],
             num_workers=self.config['num_workers'],
-            random_state=self.config['random_seed']
+            val_split=self.config['val_split']
         )
-
-        # Save split info
-        with open(self.output_dir / 'split_info.json', 'w') as f:
-            json.dump(self.split_info, f, indent=2, default=str)
-
-        print("Data loaders setup complete!")
-
+    
     def setup_model(self):
-        """Setup model, loss function, and optimizer."""
-        print("Setting up model...")
-
-        # Create model
+        """Setup model and loss function."""
+        print("\nSetting up model...")
+        
         self.model, self.criterion, self.model_info = create_model(
             backbone=self.config['backbone'],
             pretrained=self.config['pretrained'],
             device=self.device
         )
-
-        # Setup optimizer
+        
+        # Save model info
+        with open(self.output_dir / 'model_info.json', 'w') as f:
+            json.dump(self.model_info, f, indent=2)
+    
+    def setup_optimizer(self):
+        """Setup optimizer."""
         if self.config['optimizer'] == 'adam':
             self.optimizer = optim.Adam(
+                self.model.parameters(),
+                lr=self.config['learning_rate'],
+                weight_decay=self.config['weight_decay']
+            )
+        elif self.config['optimizer'] == 'adamw':
+            self.optimizer = optim.AdamW(
                 self.model.parameters(),
                 lr=self.config['learning_rate'],
                 weight_decay=self.config['weight_decay']
@@ -96,401 +157,259 @@ class ModelTrainer:
                 weight_decay=self.config['weight_decay']
             )
         else:
-            raise ValueError(
-                f"Unsupported optimizer: {self.config['optimizer']}")
-
-        # Setup scheduler
+            raise ValueError(f"Unsupported optimizer: {self.config['optimizer']}")
+        
+        print(f"Optimizer: {self.config['optimizer']} (lr={self.config['learning_rate']}, wd={self.config['weight_decay']})")
+    
+    def setup_scheduler(self):
+        """Setup learning rate scheduler."""
         if self.config['scheduler'] == 'reduce_on_plateau':
             self.scheduler = ReduceLROnPlateau(
-                self.optimizer, mode='min', factor=0.5, patience=5
+                self.optimizer,
+                mode='min',
+                factor=0.5,
+                patience=5
+            )
+        elif self.config['scheduler'] == 'step':
+            self.scheduler = StepLR(
+                self.optimizer,
+                step_size=10,
+                gamma=0.1
             )
         elif self.config['scheduler'] == 'cosine':
             self.scheduler = CosineAnnealingLR(
-                self.optimizer, T_max=self.config['epochs']
+                self.optimizer,
+                T_max=self.config['epochs'],
+                eta_min=1e-6
             )
         else:
             self.scheduler = None
-
-        # Save model info
-        with open(self.output_dir / 'model_info.json', 'w') as f:
-            json.dump(self.model_info, f, indent=2)
-
-        print("Model setup complete!")
-
-    def train_epoch(self, epoch):
+        
+        print(f"Scheduler: {self.config['scheduler']}")
+    
+    def train_epoch(self):
         """Train for one epoch."""
         self.model.train()
-        total_loss = 0.0
-        total_mse = 0.0
-        total_ranking = 0.0
-        num_batches = len(self.train_loader)
-
-        pbar = tqdm(
-            self.train_loader,
-            desc=f'Epoch {epoch+1}/{self.config["epochs"]} [Train]')
-
+        
+        total_loss = 0
+        attr_losses = {
+            'composition_score': 0,
+            'color_score': 0,
+            'focus_score': 0,
+            'exposure_score': 0,
+            'overall_score': 0
+        }
+        
+        pbar = tqdm(self.train_loader, desc=f"Epoch {self.current_epoch + 1}/{self.config['epochs']} [Train]")
+        
         for batch_idx, (images, targets, metadata) in enumerate(pbar):
             # Move to device
-            images = images.to(self.device, non_blocking=True)
-            targets = targets.to(self.device, non_blocking=True)
-
+            images = images.to(self.device)
+            targets = {k: v.to(self.device) for k, v in targets.items()}
+            
             # Forward pass
             self.optimizer.zero_grad()
             predictions = self.model(images)
-
-            # Calculate loss
-            loss, mse_loss, ranking_loss = self.criterion(
-                predictions.squeeze(), targets)
-
+            loss, losses = self.criterion(predictions, targets)
+            
             # Backward pass
             loss.backward()
-
+            
             # Gradient clipping
-            if self.config.get('gradient_clip', 0) > 0:
+            if self.config['gradient_clip'] > 0:
                 torch.nn.utils.clip_grad_norm_(
-                    self.model.parameters(), self.config['gradient_clip']
+                    self.model.parameters(),
+                    self.config['gradient_clip']
                 )
-
+            
             self.optimizer.step()
-
-            # Update metrics
+            
+            # Accumulate losses
             total_loss += loss.item()
-            total_mse += mse_loss.item()
-            total_ranking += ranking_loss
-
+            for key in attr_losses:
+                attr_losses[key] += losses[key]
+            
             # Update progress bar
-            avg_loss = total_loss / (batch_idx + 1)
             pbar.set_postfix({
-                'Loss': f'{avg_loss:.4f}',
-                'MSE': f'{total_mse / (batch_idx + 1):.4f}',
-                'LR': f'{self.optimizer.param_groups[0]["lr"]:.6f}'
+                'loss': f"{loss.item():.4f}",
+                'comp': f"{losses['composition_score']:.4f}",
+                'color': f"{losses['color_score']:.4f}"
             })
-
-        # Calculate epoch averages
-        avg_loss = total_loss / num_batches
-        avg_mse = total_mse / num_batches
-        avg_ranking = total_ranking / num_batches
-
-        return avg_loss, avg_mse, avg_ranking
-
-    def validate_epoch(self, epoch):
+        
+        # Calculate average losses
+        n_batches = len(self.train_loader)
+        avg_loss = total_loss / n_batches
+        avg_attr_losses = {k: v / n_batches for k, v in attr_losses.items()}
+        
+        return avg_loss, avg_attr_losses
+    
+    def validate_epoch(self):
         """Validate for one epoch."""
         self.model.eval()
-        total_loss = 0.0
-        total_mse = 0.0
-        total_ranking = 0.0
-        all_predictions = []
-        all_targets = []
-
+        
+        total_loss = 0
+        attr_losses = {
+            'composition_score': 0,
+            'color_score': 0,
+            'focus_score': 0,
+            'exposure_score': 0,
+            'overall_score': 0
+        }
+        
         with torch.no_grad():
-            pbar = tqdm(
-                self.val_loader,
-                desc=f'Epoch {epoch+1}/{self.config["epochs"]} [Val]')
-
-            for batch_idx, (images, targets, metadata) in enumerate(pbar):
+            pbar = tqdm(self.val_loader, desc=f"Epoch {self.current_epoch + 1}/{self.config['epochs']} [Val]")
+            
+            for images, targets, metadata in pbar:
                 # Move to device
-                images = images.to(self.device, non_blocking=True)
-                targets = targets.to(self.device, non_blocking=True)
-
+                images = images.to(self.device)
+                targets = {k: v.to(self.device) for k, v in targets.items()}
+                
                 # Forward pass
                 predictions = self.model(images)
-
-                # Calculate loss
-                loss, mse_loss, ranking_loss = self.criterion(
-                    predictions.squeeze(), targets)
-
-                # Update metrics
+                loss, losses = self.criterion(predictions, targets)
+                
+                # Accumulate losses
                 total_loss += loss.item()
-                total_mse += mse_loss.item()
-                total_ranking += ranking_loss
-
-                # Store predictions for analysis
-                all_predictions.extend(predictions.squeeze().cpu().numpy())
-                all_targets.extend(targets.cpu().numpy())
-
+                for key in attr_losses:
+                    attr_losses[key] += losses[key]
+                
                 # Update progress bar
-                avg_loss = total_loss / (batch_idx + 1)
                 pbar.set_postfix({
-                    'Loss': f'{avg_loss:.4f}',
-                    'MSE': f'{total_mse / (batch_idx + 1):.4f}'
+                    'loss': f"{loss.item():.4f}"
                 })
-
-        # Calculate epoch averages
-        num_batches = len(self.val_loader)
-        avg_loss = total_loss / num_batches
-        avg_mse = total_mse / num_batches
-        avg_ranking = total_ranking / num_batches
-
-        # Calculate additional metrics
-        predictions_np = np.array(all_predictions)
-        targets_np = np.array(all_targets)
-
-        mae = np.mean(np.abs(predictions_np - targets_np))
-        correlation = np.corrcoef(predictions_np, targets_np)[0, 1]
-
-        return avg_loss, avg_mse, avg_ranking, mae, correlation
-
-    def save_checkpoint(self, epoch, is_best=False):
+        
+        # Calculate average losses
+        n_batches = len(self.val_loader)
+        avg_loss = total_loss / n_batches
+        avg_attr_losses = {k: v / n_batches for k, v in attr_losses.items()}
+        
+        return avg_loss, avg_attr_losses
+    
+    def save_checkpoint(self, is_best=False):
         """Save model checkpoint."""
         checkpoint = {
-            'epoch': epoch,
+            'epoch': self.current_epoch,
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'best_val_loss': self.best_val_loss,
             'train_losses': self.train_losses,
             'val_losses': self.val_losses,
-            'config': self.config,
-            'model_info': self.model_info
+            'config': self.config
         }
-
-        if self.scheduler is not None:
-            checkpoint['scheduler_state_dict'] = self.scheduler.state_dict()
-
+        
         # Save latest checkpoint
         checkpoint_path = self.output_dir / 'latest_checkpoint.pth'
         torch.save(checkpoint, checkpoint_path)
-
+        
         # Save best model
         if is_best:
             best_path = self.output_dir / 'best_model.pth'
             torch.save(checkpoint, best_path)
-            print(f"New best model saved! Val loss: {self.best_val_loss:.4f}")
-
-    def load_checkpoint(self, checkpoint_path):
-        """Load checkpoint to continue training."""
-        print(f"Loading checkpoint from: {checkpoint_path}")
-
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
-
-        # Load model and optimizer state
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-
-        # Load training state
-        self.best_val_loss = checkpoint['best_val_loss']
-        self.train_losses = checkpoint.get('train_losses', [])
-        self.val_losses = checkpoint.get('val_losses', [])
-
-        # Load scheduler state if exists
-        if self.scheduler is not None and 'scheduler_state_dict' in checkpoint:
-            self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-
-        start_epoch = checkpoint['epoch'] + 1
-        self.start_epoch = start_epoch
-
-        print(f"Resuming training from epoch {start_epoch}")
-        print(f"Previous best validation loss: {self.best_val_loss:.4f}")
-
-        return start_epoch
-
-    def plot_training_curves(self):
-        """Plot and save training curves."""
-        fig, axes = plt.subplots(1, 2, figsize=(15, 5))
-
-        epochs = range(1, len(self.train_losses) + 1)
-
-        # Loss curves
-        axes[0].plot(epochs, self.train_losses, 'b-', label='Train Loss')
-        axes[0].plot(epochs, self.val_losses, 'r-', label='Val Loss')
-        axes[0].set_title('Training and Validation Loss')
-        axes[0].set_xlabel('Epoch')
-        axes[0].set_ylabel('Loss')
-        axes[0].legend()
-        axes[0].grid(True)
-
-        # Learning rate
-        if self.learning_rates:
-            axes[1].plot(epochs, self.learning_rates, 'g-')
-            axes[1].set_title('Learning Rate')
-            axes[1].set_xlabel('Epoch')
-            axes[1].set_ylabel('Learning Rate')
-            axes[1].set_yscale('log')
-            axes[1].grid(True)
-
-        plt.tight_layout()
-        plt.savefig(
-            self.output_dir /
-            'training_curves.png',
-            dpi=150,
-            bbox_inches='tight')
-        plt.close()
-
+            print(f"✅ Best model saved! Val Loss: {self.best_val_loss:.4f}")
+    
     def train(self):
         """Main training loop."""
-        print(f"\nStarting training for {self.config['epochs']} epochs...")
+        print(f"\n{'='*60}")
+        print(f"Starting training for {self.config['epochs']} epochs")
+        print(f"{'='*60}\n")
+        
         start_time = time.time()
         
-        # Handle resume - start from resumed epoch if available
-        start_epoch = getattr(self, 'start_epoch', 0)
-
-        for epoch in range(start_epoch, self.config['epochs']):
-            epoch_start = time.time()
-
-            # Training
-            train_loss, train_mse, train_ranking = self.train_epoch(epoch)
-
-            # Validation
-            val_loss, val_mse, val_ranking, val_mae, val_corr = self.validate_epoch(
-            epoch)
-
-            # Store metrics
+        for epoch in range(self.config['epochs']):
+            self.current_epoch = epoch
+            
+            # Train
+            train_loss, train_attr_losses = self.train_epoch()
             self.train_losses.append(train_loss)
+            
+            # Validate
+            val_loss, val_attr_losses = self.validate_epoch()
             self.val_losses.append(val_loss)
-            self.learning_rates.append(self.optimizer.param_groups[0]['lr'])
-
+            
             # Update scheduler
             if self.scheduler is not None:
                 if isinstance(self.scheduler, ReduceLROnPlateau):
                     self.scheduler.step(val_loss)
                 else:
                     self.scheduler.step()
-
+            
+            # Print epoch summary
+            print(f"\nEpoch {epoch + 1}/{self.config['epochs']} Summary:")
+            print(f"  Train Loss: {train_loss:.4f}")
+            print(f"    Composition: {train_attr_losses['composition_score']:.4f}")
+            print(f"    Color: {train_attr_losses['color_score']:.4f}")
+            print(f"    Focus: {train_attr_losses['focus_score']:.4f}")
+            print(f"    Exposure: {train_attr_losses['exposure_score']:.4f}")
+            print(f"  Val Loss: {val_loss:.4f}")
+            print(f"    Composition: {val_attr_losses['composition_score']:.4f}")
+            print(f"    Color: {val_attr_losses['color_score']:.4f}")
+            print(f"    Focus: {val_attr_losses['focus_score']:.4f}")
+            print(f"    Exposure: {val_attr_losses['exposure_score']:.4f}")
+            
             # Save checkpoint
             is_best = val_loss < self.best_val_loss
             if is_best:
                 self.best_val_loss = val_loss
-
-            self.save_checkpoint(epoch, is_best)
-
-            # Print epoch summary
-            epoch_time = time.time() - epoch_start
-            print(f"\nEpoch {epoch+1}/{self.config['epochs']} Summary:")
-            print(f"  Train Loss: {train_loss:.4f} (MSE: {train_mse:.4f})")
-            print(f"  Val Loss:   {val_loss:.4f} (MSE: {val_mse:.4f})")
-            print(f"  Val MAE:    {val_mae:.4f}")
-            print(f"  Val Corr:   {val_corr:.4f}")
-            print(f"  Time:       {epoch_time:.1f}s")
-            print(f"  LR:         {self.optimizer.param_groups[0]['lr']:.6f}")
-
-            # Plot training curves every 10 epochs
-            if (epoch + 1) % 10 == 0:
-                self.plot_training_curves()
-
+            
+            self.save_checkpoint(is_best=is_best)
+            
+            print()
+        
+        # Training complete
         total_time = time.time() - start_time
-        print(f"\nTraining completed in {total_time/60:.1f} minutes!")
+        print(f"\n{'='*60}")
+        print(f"Training Complete!")
+        print(f"Total time: {total_time / 3600:.2f} hours")
         print(f"Best validation loss: {self.best_val_loss:.4f}")
+        print(f"Model saved to: {self.output_dir / 'best_model.pth'}")
+        print(f"{'='*60}\n")
 
-        # Final plots
-        self.plot_training_curves()
-
-        # Save final training history
-        history = {
-            'train_losses': self.train_losses,
-            'val_losses': self.val_losses,
-            'learning_rates': self.learning_rates,
-            'best_val_loss': self.best_val_loss,
-            'total_training_time': total_time,
-            'config': self.config
-        }
-
-        with open(self.output_dir / 'training_history.json', 'w') as f:
-            json.dump(history, f, indent=2, default=str)
-
-def get_default_config():
-    """Get default training configuration."""
-    return {
-        # Data paths
-        'csv_path': '../datasets/ground_truth_dataset.csv',
-        'images_path': '../datasets/images',
-        'output_dir': 'outputs',
-
-        # Model
-        'backbone': 'resnet50',
-        'pretrained': True,
-
-        # Training
-        'epochs': 20,
-        'batch_size': 16,
-        'learning_rate': 1e-4,
-        'optimizer': 'adam',
-        'weight_decay': 1e-4,
-        'gradient_clip': 1.0,
-        'scheduler': 'reduce_on_plateau',
-
-        # Data
-        'val_split': 0.15,
-        'test_split': 0.15,
-        'num_workers': 0,
-        'random_seed': 42
-    }
 
 def main():
     """Main training function."""
-    parser = argparse.ArgumentParser(
-        description='Train Photography Evaluation Model')
-    parser.add_argument(
-        '--config',
-        type=str,
-        default=None,
-        help='Path to config JSON file')
-    parser.add_argument(
-        '--epochs',
-        type=int,
-        default=50,
-        help='Number of epochs')
-    parser.add_argument(
-        '--batch_size',
-        type=int,
-        default=32,
-        help='Batch size')
-    parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate')
-    parser.add_argument(
-        '--backbone',
-        type=str,
-        default='resnet50',
-        help='Model backbone')
-    parser.add_argument(
-        '--output_dir',
-        type=str,
-        default='outputs',
-        help='Output directory')
-    parser.add_argument('--resume', type=str, default=None,
-                        help='Path to checkpoint to resume from')
-
+    parser = argparse.ArgumentParser(description='Train AADB photography evaluation model')
+    parser.add_argument('--epochs', type=int, default=None, help='Number of epochs')
+    parser.add_argument('--batch_size', type=int, default=None, help='Batch size')
+    parser.add_argument('--lr', type=float, default=None, help='Learning rate')
+    parser.add_argument('--backbone', type=str, default='resnet50', help='Backbone architecture (resnet50, vit_small_patch16_224, etc.)')
+    parser.add_argument('--output_dir', type=str, default=None, help='Output directory')
+    parser.add_argument('--optimizer', type=str, default=None, help='Optimizer (adam, adamw, sgd)')
+    parser.add_argument('--weight_decay', type=float, default=None, help='Weight decay')
+    
     args = parser.parse_args()
-
-    # Load configuration
-    if args.config and os.path.exists(args.config):
-        with open(args.config, 'r') as f:
-            config = json.load(f)
-    else:
-        config = get_default_config()
-
-    # Override with command line arguments BEFORE creating trainer
-    if args.epochs != 50:
+    
+    # Get default config based on backbone (ViT vs CNN have different optimal settings)
+    config = get_default_config(backbone=args.backbone)
+    
+    # Override with command line args
+    if args.epochs is not None:
         config['epochs'] = args.epochs
-    if args.batch_size != 32:
+    if args.batch_size is not None:
         config['batch_size'] = args.batch_size
-    if args.lr != 1e-4:
+    if args.lr is not None:
         config['learning_rate'] = args.lr
-    if args.backbone != 'resnet50':
-        config['backbone'] = args.backbone
-    if args.output_dir != 'outputs':
+    if args.output_dir is not None:
         config['output_dir'] = args.output_dir
-
-    # Add timestamp to output directory (only if NOT resuming)
-    if not args.resume:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        config['output_dir'] = f"{config['output_dir']}/run_{timestamp}"
-
-    print("Training Configuration:")
-    for key, value in config.items():
-        print(f"  {key}: {value}")
-
-    # Create trainer and setup
-    trainer = ModelTrainer(config)
-    trainer.setup_data_loaders()
-    trainer.setup_model()
-
-    # Resume from checkpoint if specified
-    if args.resume:
-        trainer.load_checkpoint(args.resume)
-
-    # Start training
+    if args.optimizer is not None:
+        config['optimizer'] = args.optimizer
+    if args.weight_decay is not None:
+        config['weight_decay'] = args.weight_decay
+    
+    # Print configuration
+    print(f"\n{'='*60}")
+    print(f"Training Configuration:")
+    print(f"  Backbone: {config['backbone']}")
+    print(f"  Optimizer: {config['optimizer']}")
+    print(f"  Learning Rate: {config['learning_rate']}")
+    print(f"  Weight Decay: {config['weight_decay']}")
+    print(f"  Epochs: {config['epochs']}")
+    print(f"  Batch Size: {config['batch_size']}")
+    print(f"{'='*60}\n")
+    
+    # Create trainer and train
+    trainer = Trainer(config)
     trainer.train()
 
-    print("\nTraining completed successfully!")
-    print(f"Results saved to: {trainer.output_dir}")
 
 if __name__ == "__main__":
     main()
