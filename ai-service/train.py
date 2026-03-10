@@ -19,9 +19,9 @@ def get_default_config(backbone='resnet50'):
     
     # Base config
     config = {
-        # AADB paths
-        'train_labels_path': '../datasets/AADB/imgListFiles_label/aesthetics_image_lists/train_labels.txt',
-        'test_labels_path': '../datasets/AADB/imgListFiles_label/aesthetics_image_lists/test_labels.txt',
+        # AADB paths - using individual attribute files (all 11 attributes)
+        'train_labels_path': '../datasets/AADB/imgListFiles_label',
+        'test_labels_path': '../datasets/AADB/imgListFiles_label',
         'images_path': '../datasets/AADB/datasetImages_originalSize',
         'output_dir': 'outputs/aadb',
         

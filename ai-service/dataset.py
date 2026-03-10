@@ -44,27 +44,50 @@ class AADBPhotographyDataset(Dataset):
     
     def _normalize_scores(self):
         """Normalize AADB scores from their mean-centered range to 0-100 range."""
-        # AADB attribute columns (case-sensitive)
         # AADB provides mean-centered scores (roughly -1 to 1)
         # We normalize to 0-100 range: (score + 1) * 50
-        attribute_mapping = {
-            'Composition': 'composition_score',
-            'ColorHarmony': 'color_score',
-            'DoF': 'focus_score',  # Depth of Field = Focus
-            'Light': 'exposure_score'  # Light = Exposure
+        
+        # Multi-attribute fusion with Top-2 averaging for composition
+        attribute_groups = {
+            'composition_score': ['RuleOfThirds', 'Symmetry', 'BalacingElements', 'Repetition', 'Object'],
+            'color_score': ['ColorHarmony', 'VividColor'],
+            'focus_score': ['DoF'],
+            'exposure_score': ['Light']
         }
         
-        for aadb_col, our_col in attribute_mapping.items():
-            if aadb_col in self.df.columns:
-                # Convert from mean-centered (-1 to 1) to 0-100 scale
-                # Clip to reasonable range first
-                scores = self.df[aadb_col].clip(-1.0, 1.0)
-                self.df[our_col] = (scores + 1.0) * 50.0
+        # Normalize and group attributes
+        for our_col, aadb_cols in attribute_groups.items():
+            normalized_attrs = []
+            
+            for aadb_col in aadb_cols:
+                if aadb_col in self.df.columns:
+                    # Convert from mean-centered (-1 to 1) to 0-100 scale
+                    scores = self.df[aadb_col].clip(-1.0, 1.0)
+                    normalized = (scores + 1.0) * 50.0
+                    normalized_attrs.append(normalized)
+                else:
+                    print(f"Warning: Column '{aadb_col}' not found in dataset")
+            
+            # Special handling for composition: Take Top-2 average
+            # Philosophy: Good composition = 2-3 techniques executed well
+            if normalized_attrs:
+                if our_col == 'composition_score' and len(normalized_attrs) >= 2:
+                    # Take average of top 2 attributes for each image
+                    attrs_df = pd.concat(normalized_attrs, axis=1)
+                    # Sort each row and take mean of top 2 values
+                    self.df[our_col] = attrs_df.apply(
+                        lambda row: row.nlargest(2).mean(), axis=1
+                    )
+                    print(f"  {our_col}: top-2 average of {len(normalized_attrs)} attributes")
+                else:
+                    # Regular average for color, focus, exposure
+                    self.df[our_col] = pd.concat(normalized_attrs, axis=1).mean(axis=1)
+                    print(f"  {our_col}: averaged {len(normalized_attrs)} attributes")
             else:
-                print(f"Warning: Column '{aadb_col}' not found in dataset")
-                self.df[our_col] = 50.0  # Default to middle score
+                print(f"Warning: No attributes found for {our_col}, using default")
+                self.df[our_col] = 50.0
         
-        # Calculate overall score as average of 4 attributes
+        # Calculate overall score as average of 4 technical scores
         score_cols = ['composition_score', 'color_score', 'focus_score', 'exposure_score']
         available_cols = [col for col in score_cols if col in self.df.columns]
         if available_cols:
@@ -154,20 +177,72 @@ class AADBPhotographyDataset(Dataset):
         return image, scores, metadata
 
 
-def load_aadb_labels(labels_file):
+def load_aadb_attribute_file(file_path):
+    """Load single AADB attribute file (image_id score pairs)."""
+    data = {}
+    with open(file_path, 'r') as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) == 2:
+                image_id, score = parts[0], float(parts[1])
+                data[image_id] = score
+    return data
+
+
+def load_aadb_labels_from_individual_files(labels_base_path, split='Train'):
     """
-    Load AADB labels from text file.
-    
-    AADB format (space-separated):
-    image_id Composition ColorHarmony Content DoF Light Object
-    
-    We only use: Composition, ColorHarmony, DoF, Light
+    Load all 11 AADB attributes from individual regression files.
     
     Args:
-        labels_file: Path to AADB label file (train_labels.txt or test_labels.txt)
+        labels_base_path: Path to AADB imgListFiles_label directory
+        split: 'Train', 'Test', or 'Validation'
     
     Returns:
-        pandas.DataFrame with columns: image_id, Composition, ColorHarmony, DoF, Light
+        pandas.DataFrame with all 11 AADB attributes
+    """
+    labels_base_path = Path(labels_base_path)
+    
+    # All 11 AADB attributes
+    attribute_names = [
+        'RuleOfThirds', 'Symmetry', 'BalacingElements', 'Repetition', 'Object',
+        'ColorHarmony', 'VividColor', 'DoF', 'Light', 'Content', 'MotionBlur'
+    ]
+    
+    # Load each attribute from its file
+    all_attributes = {}
+    for attr in attribute_names:
+        file_name = f'imgList{split}Regression_{attr}.txt'
+        file_path = labels_base_path / file_name
+        
+        if file_path.exists():
+            attr_data = load_aadb_attribute_file(file_path)
+            all_attributes[attr] = attr_data
+            print(f"  Loaded {attr}: {len(attr_data)} images")
+        else:
+            print(f"  Warning: {file_name} not found")
+    
+    # Get all unique image IDs
+    all_image_ids = set()
+    for attr_data in all_attributes.values():
+        all_image_ids.update(attr_data.keys())
+    
+    # Build DataFrame with all attributes
+    data = []
+    for image_id in sorted(all_image_ids):
+        row = {'image_id': image_id}
+        for attr, attr_data in all_attributes.items():
+            row[attr] = attr_data.get(image_id, 0.0)  # Default to 0 if missing
+        data.append(row)
+    
+    df = pd.DataFrame(data)
+    print(f"Combined dataset: {len(df)} images with {len(all_attributes)} attributes")
+    return df
+
+
+def load_aadb_labels(labels_file):
+    """
+    DEPRECATED: Old single-file loader. Use load_aadb_labels_from_individual_files instead.
+    Kept for backward compatibility.
     """
     data = []
     
@@ -177,12 +252,12 @@ def load_aadb_labels(labels_file):
             if len(parts) >= 7:  # image_id + 6 attributes
                 data.append({
                     'image_id': parts[0],
-                    'Composition': float(parts[1]),  # Composition
-                    'ColorHarmony': float(parts[2]),  # Color
-                    'Content': float(parts[3]),  # Not used in our model
-                    'DoF': float(parts[4]),  # Focus (Depth of Field)
-                    'Light': float(parts[5]),  # Exposure
-                    'Object': float(parts[6])  # Not used in our model
+                    'Composition': float(parts[1]),
+                    'ColorHarmony': float(parts[2]),
+                    'Content': float(parts[3]),
+                    'DoF': float(parts[4]),
+                    'Light': float(parts[5]),
+                    'Object': float(parts[6])
                 })
     
     df = pd.DataFrame(data)
@@ -196,8 +271,8 @@ def create_data_loaders(train_labels_path, test_labels_path, images_path,
     Create train/val/test data loaders for AADB dataset.
     
     Args:
-        train_labels_path: Path to AADB train_labels.txt
-        test_labels_path: Path to AADB test_labels.txt
+        train_labels_path: Path to AADB train labels (can be file or imgListFiles_label dir)
+        test_labels_path: Path to AADB test labels (can be file or imgListFiles_label dir)
         images_path: Path to AADB images folder
         batch_size: Batch size for training
         num_workers: Number of data loading workers
@@ -208,9 +283,22 @@ def create_data_loaders(train_labels_path, test_labels_path, images_path,
     """
     print("Loading AADB dataset...")
     
-    # Load labels
-    train_df = load_aadb_labels(train_labels_path)
-    test_df = load_aadb_labels(test_labels_path)
+    # Check if we're using individual files (new method) or combined file (old method)
+    train_path = Path(train_labels_path)
+    
+    # If train_labels_path ends with .txt, use old loader; otherwise use new multi-attribute loader
+    if train_path.suffix == '.txt':
+        # Old method: combined label files (6 attributes only)
+        print("Using combined label files (limited attributes)...")
+        train_df = load_aadb_labels(train_labels_path)
+        test_df = load_aadb_labels(test_labels_path)
+    else:
+        # New method: individual attribute files (all 11 attributes)
+        print("Loading all 11 attributes from individual files...")
+        print("\nTrain split:")
+        train_df = load_aadb_labels_from_individual_files(train_labels_path, split='Train')
+        print("\nTest split:")
+        test_df = load_aadb_labels_from_individual_files(test_labels_path, split='Test')
     
     # Split train into train/val
     train_indices, val_indices = train_test_split(
