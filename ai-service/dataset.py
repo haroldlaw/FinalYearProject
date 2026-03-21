@@ -405,6 +405,6 @@ if __name__ == "__main__":
         print(f"  Overall scores: {scores['overall_score'][:2].tolist()}")
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
         import traceback
         traceback.print_exc()

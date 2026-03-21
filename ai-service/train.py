@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR, CosineAnnealingLR
+from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR, CosineAnnealingLR, LinearLR, SequentialLR
 import argparse
 import json
 import time
@@ -33,6 +33,8 @@ def get_default_config(backbone='resnet50'):
         'epochs': 50,
         'batch_size': 16,
         'gradient_clip': 1.0,
+        'warmup_epochs': 0,
+        'warmup_start_factor': 0.1,
         
         # Data
         'val_split': 0.15,
@@ -163,6 +165,9 @@ class Trainer:
     
     def setup_scheduler(self):
         """Setup learning rate scheduler."""
+        warmup_epochs = int(self.config.get('warmup_epochs', 0) or 0)
+        warmup_start_factor = float(self.config.get('warmup_start_factor', 0.1))
+
         if self.config['scheduler'] == 'reduce_on_plateau':
             self.scheduler = ReduceLROnPlateau(
                 self.optimizer,
@@ -177,11 +182,38 @@ class Trainer:
                 gamma=0.1
             )
         elif self.config['scheduler'] == 'cosine':
-            self.scheduler = CosineAnnealingLR(
-                self.optimizer,
-                T_max=self.config['epochs'],
-                eta_min=1e-6
-            )
+            if warmup_start_factor <= 0 or warmup_start_factor > 1:
+                print(f"⚠️  Invalid warmup_start_factor={warmup_start_factor}. Resetting to 0.1")
+                warmup_start_factor = 0.1
+
+            max_warmup = max(self.config['epochs'] - 1, 0)
+            effective_warmup = min(warmup_epochs, max_warmup)
+
+            if effective_warmup > 0:
+                cosine_epochs = max(self.config['epochs'] - effective_warmup, 1)
+                warmup_scheduler = LinearLR(
+                    self.optimizer,
+                    start_factor=warmup_start_factor,
+                    end_factor=1.0,
+                    total_iters=effective_warmup
+                )
+                cosine_scheduler = CosineAnnealingLR(
+                    self.optimizer,
+                    T_max=cosine_epochs,
+                    eta_min=1e-6
+                )
+                self.scheduler = SequentialLR(
+                    self.optimizer,
+                    schedulers=[warmup_scheduler, cosine_scheduler],
+                    milestones=[effective_warmup]
+                )
+                print(f"Warmup: {effective_warmup} epochs (start_factor={warmup_start_factor})")
+            else:
+                self.scheduler = CosineAnnealingLR(
+                    self.optimizer,
+                    T_max=self.config['epochs'],
+                    eta_min=1e-6
+                )
         else:
             self.scheduler = None
         
@@ -375,6 +407,13 @@ def main():
     parser.add_argument('--output_dir', type=str, default=None, help='Output directory')
     parser.add_argument('--optimizer', type=str, default=None, help='Optimizer (adam, adamw, sgd)')
     parser.add_argument('--weight_decay', type=float, default=None, help='Weight decay')
+    parser.add_argument('--scheduler', type=str, default=None,
+                        choices=['reduce_on_plateau', 'step', 'cosine', 'none'],
+                        help='LR scheduler')
+    parser.add_argument('--warmup_epochs', type=int, default=None,
+                        help='Warmup epochs (used with cosine scheduler)')
+    parser.add_argument('--warmup_start_factor', type=float, default=None,
+                        help='Warmup LR start factor in (0, 1]')
     
     args = parser.parse_args()
     
@@ -394,12 +433,21 @@ def main():
         config['optimizer'] = args.optimizer
     if args.weight_decay is not None:
         config['weight_decay'] = args.weight_decay
+    if args.scheduler is not None:
+        config['scheduler'] = None if args.scheduler == 'none' else args.scheduler
+    if args.warmup_epochs is not None:
+        config['warmup_epochs'] = max(args.warmup_epochs, 0)
+    if args.warmup_start_factor is not None:
+        config['warmup_start_factor'] = args.warmup_start_factor
     
     # Print configuration
     print(f"\n{'='*60}")
     print(f"Training Configuration:")
     print(f"  Backbone: {config['backbone']}")
     print(f"  Optimizer: {config['optimizer']}")
+    print(f"  Scheduler: {config['scheduler']}")
+    print(f"  Warmup Epochs: {config.get('warmup_epochs', 0)}")
+    print(f"  Warmup Start Factor: {config.get('warmup_start_factor', 0.1)}")
     print(f"  Learning Rate: {config['learning_rate']}")
     print(f"  Weight Decay: {config['weight_decay']}")
     print(f"  Epochs: {config['epochs']}")
@@ -409,7 +457,6 @@ def main():
     # Create trainer and train
     trainer = Trainer(config)
     trainer.train()
-
 
 if __name__ == "__main__":
     main()
