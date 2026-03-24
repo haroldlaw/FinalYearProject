@@ -35,6 +35,9 @@ def get_default_config(backbone='resnet50'):
         'gradient_clip': 1.0,
         'warmup_epochs': 0,
         'warmup_start_factor': 0.1,
+        'pretrained_backbone': None,  # path to AVA pretrained checkpoint
+        'freeze_backbone_epochs': 0,   # freeze backbone for first N epochs (0 = never)
+        'backbone_lr': None,           # lr for backbone after unfreezing (None = same as lr)
         
         # Data
         'val_split': 0.15,
@@ -132,36 +135,97 @@ class Trainer:
             pretrained=self.config['pretrained'],
             device=self.device
         )
+
+        # Load AVA-pretrained backbone weights if provided
+        pretrained_backbone = self.config.get('pretrained_backbone')
+        if pretrained_backbone:
+            ckpt_path = Path(pretrained_backbone)
+            if ckpt_path.exists():
+                print(f"Loading AVA pretrained backbone from: {ckpt_path}")
+                checkpoint = torch.load(ckpt_path, map_location=self.device)
+                # Checkpoint may store backbone weights directly or inside model_state_dict
+                if 'backbone_state_dict' in checkpoint:
+                    missing, unexpected = self.model.backbone.load_state_dict(
+                        checkpoint['backbone_state_dict'], strict=False
+                    )
+                elif 'model_state_dict' in checkpoint:
+                    # Extract backbone keys from full model state dict
+                    full_sd = checkpoint['model_state_dict']
+                    backbone_sd = {k.replace('backbone.', ''): v
+                                   for k, v in full_sd.items() if k.startswith('backbone.')}
+                    missing, unexpected = self.model.backbone.load_state_dict(
+                        backbone_sd, strict=False
+                    )
+                else:
+                    missing, unexpected = self.model.backbone.load_state_dict(
+                        checkpoint, strict=False
+                    )
+                print(f"  Backbone loaded  |  missing={len(missing)}  unexpected={len(unexpected)}")
+            else:
+                print(f"⚠️  pretrained_backbone path not found: {ckpt_path}")
+        
+        # Freeze backbone for first N epochs if requested
+        freeze_epochs = int(self.config.get('freeze_backbone_epochs', 0) or 0)
+        if freeze_epochs > 0:
+            for param in self.model.backbone.parameters():
+                param.requires_grad = False
+            trainable = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+            print(f"  Backbone frozen for first {freeze_epochs} epochs  |  trainable params: {trainable:,}")
         
         # Save model info
         with open(self.output_dir / 'model_info.json', 'w') as f:
             json.dump(self.model_info, f, indent=2)
     
+    def _build_param_groups(self):
+        """Build optimizer parameter groups with optional differential lr for backbone."""
+        backbone_frozen = not any(p.requires_grad for p in self.model.backbone.parameters())
+        backbone_lr = self.config.get('backbone_lr')
+        head_lr = self.config['learning_rate']
+        wd = self.config['weight_decay']
+
+        if backbone_frozen or backbone_lr is None:
+            # Single group — all trainable params at same lr
+            return self.model.parameters(), head_lr
+        else:
+            # Two groups — backbone at backbone_lr, heads at head_lr
+            backbone_params = list(self.model.backbone.parameters())
+            backbone_ids = {id(p) for p in backbone_params}
+            head_params = [p for p in self.model.parameters() if id(p) not in backbone_ids]
+            return [
+                {'params': backbone_params, 'lr': backbone_lr, 'weight_decay': wd},
+                {'params': head_params,    'lr': head_lr,     'weight_decay': wd},
+            ], head_lr
+
     def setup_optimizer(self):
         """Setup optimizer."""
+        param_groups, base_lr = self._build_param_groups()
         if self.config['optimizer'] == 'adam':
             self.optimizer = optim.Adam(
-                self.model.parameters(),
-                lr=self.config['learning_rate'],
+                param_groups,
+                lr=base_lr,
                 weight_decay=self.config['weight_decay']
             )
         elif self.config['optimizer'] == 'adamw':
             self.optimizer = optim.AdamW(
-                self.model.parameters(),
-                lr=self.config['learning_rate'],
+                param_groups,
+                lr=base_lr,
                 weight_decay=self.config['weight_decay']
             )
         elif self.config['optimizer'] == 'sgd':
             self.optimizer = optim.SGD(
-                self.model.parameters(),
-                lr=self.config['learning_rate'],
+                param_groups,
+                lr=base_lr,
                 momentum=0.9,
                 weight_decay=self.config['weight_decay']
             )
         else:
             raise ValueError(f"Unsupported optimizer: {self.config['optimizer']}")
         
-        print(f"Optimizer: {self.config['optimizer']} (lr={self.config['learning_rate']}, wd={self.config['weight_decay']})")
+        backbone_lr = self.config.get('backbone_lr')
+        if backbone_lr and not (not any(p.requires_grad for p in self.model.backbone.parameters())):
+            print(f"Optimizer: {self.config['optimizer']} (backbone_lr={backbone_lr}, head_lr={self.config['learning_rate']}, wd={self.config['weight_decay']})")
+        else:
+            print(f"Optimizer: {self.config['optimizer']} (lr={self.config['learning_rate']}, wd={self.config['weight_decay']})")
     
     def setup_scheduler(self):
         """Setup learning rate scheduler."""
@@ -218,7 +282,38 @@ class Trainer:
             self.scheduler = None
         
         print(f"Scheduler: {self.config['scheduler']}")
-    
+
+    def unfreeze_backbone(self):
+        """Unfreeze backbone and rebuild optimizer/scheduler with differential lr."""
+        print(f"\n{'='*60}")
+        print(f"Unfreezing backbone at epoch {self.current_epoch + 1}")
+        for param in self.model.backbone.parameters():
+            param.requires_grad = True
+        total = sum(p.numel() for p in self.model.parameters())
+        trainable = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        print(f"  Trainable params: {trainable:,} / {total:,}")
+
+        # Rebuild optimizer with param groups
+        backbone_lr = self.config.get('backbone_lr') or self.config['learning_rate']
+        self.config['backbone_lr'] = backbone_lr  # ensure it's set for _build_param_groups
+        param_groups, base_lr = self._build_param_groups()
+        if self.config['optimizer'] == 'adam':
+            self.optimizer = optim.Adam(param_groups, lr=base_lr, weight_decay=self.config['weight_decay'])
+        elif self.config['optimizer'] == 'adamw':
+            self.optimizer = optim.AdamW(param_groups, lr=base_lr, weight_decay=self.config['weight_decay'])
+        elif self.config['optimizer'] == 'sgd':
+            self.optimizer = optim.SGD(param_groups, lr=base_lr, momentum=0.9, weight_decay=self.config['weight_decay'])
+        print(f"  Optimizer rebuilt  |  backbone_lr={backbone_lr}  head_lr={self.config['learning_rate']}")
+
+        # Rebuild scheduler for remaining epochs
+        remaining = self.config['epochs'] - self.current_epoch
+        if self.config['scheduler'] == 'cosine':
+            self.scheduler = CosineAnnealingLR(self.optimizer, T_max=max(remaining, 1), eta_min=1e-6)
+            print(f"  Scheduler rebuilt  |  cosine over {remaining} remaining epochs")
+        elif self.config['scheduler'] == 'reduce_on_plateau':
+            self.scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.5, patience=5)
+        print(f"{'='*60}\n")
+
     def train_epoch(self):
         """Train for one epoch."""
         self.model.train()
@@ -347,8 +442,14 @@ class Trainer:
         
         start_time = time.time()
         
+        freeze_epochs = int(self.config.get('freeze_backbone_epochs', 0) or 0)
+
         for epoch in range(self.config['epochs']):
             self.current_epoch = epoch
+
+            # Unfreeze backbone when freeze phase ends
+            if freeze_epochs > 0 and epoch == freeze_epochs:
+                self.unfreeze_backbone()
             
             # Train
             train_loss, train_attr_losses = self.train_epoch()
@@ -414,6 +515,12 @@ def main():
                         help='Warmup epochs (used with cosine scheduler)')
     parser.add_argument('--warmup_start_factor', type=float, default=None,
                         help='Warmup LR start factor in (0, 1]')
+    parser.add_argument('--pretrained_backbone', type=str, default=None,
+                        help='Path to AVA pretrained checkpoint to load backbone weights from')
+    parser.add_argument('--freeze_backbone_epochs', type=int, default=None,
+                        help='Freeze backbone for first N epochs, then unfreeze with backbone_lr')
+    parser.add_argument('--backbone_lr', type=float, default=None,
+                        help='LR for backbone after unfreezing (default: same as --lr)')
     
     args = parser.parse_args()
     
@@ -439,6 +546,12 @@ def main():
         config['warmup_epochs'] = max(args.warmup_epochs, 0)
     if args.warmup_start_factor is not None:
         config['warmup_start_factor'] = args.warmup_start_factor
+    if args.pretrained_backbone is not None:
+        config['pretrained_backbone'] = args.pretrained_backbone
+    if args.freeze_backbone_epochs is not None:
+        config['freeze_backbone_epochs'] = max(args.freeze_backbone_epochs, 0)
+    if args.backbone_lr is not None:
+        config['backbone_lr'] = args.backbone_lr
     
     # Print configuration
     print(f"\n{'='*60}")
@@ -448,6 +561,9 @@ def main():
     print(f"  Scheduler: {config['scheduler']}")
     print(f"  Warmup Epochs: {config.get('warmup_epochs', 0)}")
     print(f"  Warmup Start Factor: {config.get('warmup_start_factor', 0.1)}")
+    print(f"  Pretrained Backbone: {config.get('pretrained_backbone') or 'ImageNet only'}")
+    print(f"  Freeze Backbone Epochs: {config.get('freeze_backbone_epochs', 0)}")
+    print(f"  Backbone LR (after unfreeze): {config.get('backbone_lr') or 'same as lr'}")
     print(f"  Learning Rate: {config['learning_rate']}")
     print(f"  Weight Decay: {config['weight_decay']}")
     print(f"  Epochs: {config['epochs']}")
