@@ -1,0 +1,18 @@
+{
+  "train_labels_path": "../datasets/AADB/imgListFiles_label/aesthetics_image_lists/train_labels.txt",
+  "test_labels_path": "../datasets/AADB/imgListFiles_label/aesthetics_image_lists/test_labels.txt",
+  "images_path": "../datasets/AADB/datasetImages_originalSize",
+  "output_dir": "outputs/aadb",
+  "backbone": "resnet50",
+  "pretrained": true,
+  "epochs": 50,
+  "batch_size": 16,
+  "learning_rate": 0.0001,
+  "optimizer": "adam",
+  "weight_decay": 0.0001,
+  "gradient_clip": 1.0,
+  "scheduler": "reduce_on_plateau",
+  "val_split": 0.15,
+  "num_workers": 4,
+  "random_seed": 42
+}

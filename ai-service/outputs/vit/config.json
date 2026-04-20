@@ -1,0 +1,18 @@
+{
+  "train_labels_path": "../datasets/AADB/imgListFiles_label/aesthetics_image_lists/train_labels.txt",
+  "test_labels_path": "../datasets/AADB/imgListFiles_label/aesthetics_image_lists/test_labels.txt",
+  "images_path": "../datasets/AADB/datasetImages_originalSize",
+  "output_dir": "outputs/vit_small",
+  "backbone": "vit_small_patch16_224",
+  "pretrained": true,
+  "epochs": 50,
+  "batch_size": 16,
+  "gradient_clip": 1.0,
+  "val_split": 0.15,
+  "num_workers": 4,
+  "random_seed": 42,
+  "optimizer": "adamw",
+  "learning_rate": 0.0003,
+  "weight_decay": 0.05,
+  "scheduler": "cosine"
+}

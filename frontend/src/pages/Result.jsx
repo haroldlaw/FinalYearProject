@@ -348,7 +348,6 @@ const Result = () => {
                           (() => {
                             console.log('Displaying AI recommendations:', analysisData.analysisResult.recommendations);
                             return analysisData.analysisResult.recommendations
-                              .slice(0, 3)
                               .map((rec, index) => (
                                 <div key={index} className="flex items-start bg-gray-800/50 rounded-xl p-3 border border-white/10 hover:border-indigo-400/30 transition-colors">
                                   <span className="mr-3 text-blue-400 text-lg">•</span>

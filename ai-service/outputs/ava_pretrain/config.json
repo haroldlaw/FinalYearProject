@@ -1,0 +1,18 @@
+{
+  "ava_txt_path": "C:\\Users\\harold\\Downloads\\archive\\AVA_Files\\AVA.txt",
+  "images_path": "C:\\Users\\harold\\Downloads\\archive\\images",
+  "output_dir": "outputs/ava_pretrain",
+  "backbone": "resnet50",
+  "pretrained": true,
+  "epochs": 20,
+  "batch_size": 32,
+  "learning_rate": 0.0001,
+  "weight_decay": 0.0001,
+  "dropout": 0.5,
+  "warmup_epochs": 2,
+  "warmup_start_factor": 0.1,
+  "val_split": 0.05,
+  "num_workers": 4,
+  "gradient_clip": 1.0,
+  "random_seed": 42
+}

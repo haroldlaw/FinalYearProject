@@ -24,10 +24,7 @@ try {
   initializationStatus = 'INIT_ERROR';
 }
 
-// ============================================================================
 // CUSTOM AI MODEL FUNCTIONS
-// ============================================================================
-
 const callPhotographyModel = (imageBuffer) => {
   return new Promise((resolve, reject) => {
     const modelPath = path.join(__dirname, '../python_service/photography_evaluator.py');
@@ -150,44 +147,42 @@ const getColorAnalysis = (score) => ({
   saturation: score >= 80 ? "Rich" : score >= 60 ? "Natural" : "Flat"
 });
 
-const generateModelBasedRecommendations = (aestheticScore, modelResults) => {
+const generateRecommendations = (compositionScore, colorScore, focusScore, exposureScore) => {
+  const overallScore = Math.round((compositionScore + colorScore + focusScore + exposureScore) / 4);
+
+  // If all attributes are above 70, return a single overall positive recommendation
+  if (compositionScore > 70 && colorScore > 70 && focusScore > 70 && exposureScore > 70) {
+    if (overallScore >= 85) {
+      return ["Exceptional work! Continue pushing creative boundaries and developing your unique style"];
+    }
+    return ["Strong technical skills! Consider exploring more artistic elements and emotional storytelling"];
+  }
+
+  // Generate a recommendation for each attribute that is below 60
   const recommendations = [];
-  
-  // Score-based recommendations
-  if (aestheticScore < 50) {
-    recommendations.push("Focus on basic photography fundamentals: proper exposure, sharp focus, and clear composition");
-  } else if (aestheticScore < 60) {
-    recommendations.push("Good start! Work on composition techniques like rule of thirds and leading lines");
-  } else if (aestheticScore < 75) {
-    recommendations.push("Solid foundation! Experiment with creative angles, lighting, and depth of field");
-  } else if (aestheticScore < 85) {
-    recommendations.push("Strong technical skills! Consider exploring more artistic elements and emotional storytelling");
-  } else {
-    recommendations.push("Exceptional work! Continue pushing creative boundaries and developing your unique style");
-  }
-  
-  // Add specific technical recommendations
-  if (modelResults.focus_score < modelResults.aesthetic_score - 10) {
-    recommendations.push("Pay attention to focus accuracy and sharpness for better impact");
-  }
-  if (modelResults.composition_score < modelResults.aesthetic_score - 10) {
+
+  if (compositionScore < 60) {
     recommendations.push("Strengthen composition by applying rule of thirds and visual balance principles");
   }
-  if (modelResults.exposure_score < modelResults.aesthetic_score - 10) {
+  if (focusScore < 60) {
+    recommendations.push("Pay attention to focus accuracy and sharpness for better impact");
+  }
+  if (exposureScore < 60) {
     recommendations.push("Improve exposure control to better capture highlight and shadow detail");
   }
-  
-  // Confidence-based recommendations
-  if (modelResults.confidence < 70) {
-    recommendations.push("Consider retaking the shot with better lighting or different angle for clearer evaluation");
+  if (colorScore < 60) {
+    recommendations.push("Adjust white balance and color grading to achieve more natural and vibrant tones");
   }
-  
-  return recommendations.slice(0, 3);
+
+  // Fallback when no attribute is below 60 but not all are above 70 (scores in 60-70 range)
+  if (recommendations.length === 0) {
+    recommendations.push("Solid foundation! Experiment with creative angles, lighting, and depth of field");
+  }
+
+  return recommendations;
 };
 
-// ============================================================================
 // CUSTOM AI ANALYSIS FUNCTION
-// ============================================================================
 
 const analyzeImageWithCustomAI = async (imageBuffer, filename = 'unknown') => {
   console.log(`\n ========== CUSTOM AI ANALYSIS FOR: ${filename} ==========`);
@@ -210,13 +205,13 @@ const analyzeImageWithCustomAI = async (imageBuffer, filename = 'unknown') => {
       throw new Error(`Model error: ${modelResults.error}`);
     }
     
-    // Use your model's aesthetic score as the primary metric
-    const aestheticScore = modelResults.aesthetic_score || 50;
-    const compositionScore = modelResults.composition_score || aestheticScore;
-    const focusScore = modelResults.focus_score || aestheticScore;
-    const exposureScore = modelResults.exposure_score || aestheticScore;
-    const colorScore = modelResults.color_score || aestheticScore;
-    const overallScore = Math.round(aestheticScore);
+    // Use the model's scores directly (Python returns overall_score, not aesthetic_score)
+    const overallScore = Math.round(modelResults.overall_score || 50);
+    const compositionScore = modelResults.composition_score || overallScore;
+    const focusScore = modelResults.focus_score || overallScore;
+    const exposureScore = modelResults.exposure_score || overallScore;
+    const colorScore = modelResults.color_score || overallScore;
+    const aestheticScore = overallScore;
     
     // Generate comprehensive analysis using your model's output
     const analysisResult = {
@@ -255,7 +250,7 @@ const analyzeImageWithCustomAI = async (imageBuffer, filename = 'unknown') => {
       color: getColorAnalysis(colorScore),
       
       // Generate recommendations based on your model's output
-      recommendations: generateModelBasedRecommendations(aestheticScore, modelResults),
+      recommendations: generateRecommendations(compositionScore, colorScore, focusScore, exposureScore),
       
       // Model-specific properties
       imageProperties: {
@@ -280,10 +275,7 @@ const analyzeImageWithCustomAI = async (imageBuffer, filename = 'unknown') => {
   }
 };
 
-// ============================================================================
 // GOOGLE VISION API ANALYSIS FUNCTIONS
-// ============================================================================
-
 // Analyze image composition using rule of thirds and visual balance
 const analyzeComposition = (faces, objects, landmarks) => {
   let score = 0; // Start from 0
@@ -559,8 +551,8 @@ const analyzeImageWithGoogleVision = async (imageBuffer, filename = 'unknown') =
         saturation: colors.length >= 3 ? "Rich" : "Moderate"
       },
       
-      // Google Vision recommendations
-      recommendations: generateRecommendations(compositionScore, focusScore, exposureScore, colorScore, labels, faces, objects),
+      // Recommendations
+      recommendations: generateRecommendations(compositionScore, colorScore, focusScore, exposureScore),
       
       // Image properties
       imageProperties: {
@@ -581,61 +573,6 @@ const analyzeImageWithGoogleVision = async (imageBuffer, filename = 'unknown') =
     return generateFallbackAnalysis(filename);
   }
 };
-
-// Generate AI-powered recommendations based on scores and analysis data
-const generateRecommendations = (compositionScore, focusScore, exposureScore, colorScore, labels, faces, objects) => {
-  console.log(`Generating recommendations based on scores: Comp=${compositionScore}, Focus=${focusScore}, Exp=${exposureScore}, Color=${colorScore}`);
-  
-  const recommendations = [];
-  
-  // Score-based recommendations
-  if (compositionScore < 65) {
-    recommendations.push("Try using the rule of thirds - position key subjects along the grid lines for better composition");
-  }
-  
-  if (focusScore < 65) {
-    recommendations.push("Consider using a faster shutter speed or better stabilization for sharper focus");
-  }
-  
-  if (exposureScore < 65) {
-    recommendations.push("Adjust exposure settings - try exposure compensation or different metering modes");
-  }
-  
-  if (colorScore < 65) {
-    recommendations.push("Experiment with white balance settings or post-processing to enhance color accuracy");
-  }
-  
-  // Subject-specific recommendations based on AI detection
-  if (faces && faces.length > 0) {
-    recommendations.push("Great portrait detected! Consider using portrait mode or wider aperture for better background blur");
-  }
-  
-  if (labels && labels.some(label => 
-    label.description && label.description.toLowerCase().includes('landscape')
-  )) {
-    recommendations.push("Beautiful landscape! Try using a polarizing filter to enhance sky contrast and reduce reflections");
-  }
-  
-  if (objects && objects.length > 3) {
-    recommendations.push("Rich scene with multiple subjects - consider simplifying composition for stronger visual impact");
-  }
-  
-  // Additional recommendations based on score combinations
-  if (compositionScore >= 80 && focusScore >= 80) {
-    recommendations.push("Excellent technical execution! Try experimenting with creative angles or lighting for artistic effect");
-  }
-  
-  // Default recommendation if no specific issues found
-  if (recommendations.length === 0) {
-    recommendations.push("Well-composed image! Continue exploring different subjects and lighting conditions");
-  }
-  
-  return recommendations.slice(0, 3);
-};
-
-// ============================================================================
-// FALLBACK ANALYSIS
-// ============================================================================
 
 // Fallback analysis when AI is not available
 const generateFallbackAnalysis = (filename = 'unknown') => {
@@ -712,10 +649,7 @@ const generateFallbackAnalysis = (filename = 'unknown') => {
   };
 };
 
-// ============================================================================
 // MAIN ANALYSIS FUNCTION - CHOOSES BETWEEN CUSTOM AI AND GOOGLE VISION
-// ============================================================================
-
 const analyzeImageWithAI = async (imageBuffer, filename = 'unknown') => {
   const useCustomModel = process.env.USE_CUSTOM_MODEL === 'true';
   
@@ -734,10 +668,7 @@ const analyzeImageWithAI = async (imageBuffer, filename = 'unknown') => {
   }
 };
 
-// ============================================================================
 // MODULE EXPORTS
-// ============================================================================
-
 module.exports = {
   analyzeImageWithAI,                // Main function (switches based on USE_CUSTOM_MODEL)
   analyzeImageWithCustomAI,          // Force custom AI

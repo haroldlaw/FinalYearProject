@@ -32,9 +32,6 @@ Thumbs.db
 
 # Google Cloud credentials
 credentials.json
-*.json
-!package.json
-!package-lock.json
 
 # Python virtual environment
 .venv/
@@ -47,10 +44,4 @@ __pycache__/
 *-checkpoint.ipynb
 
 # Training outputs
-ai-service/outputs/
-*.pth
-*.pkl
-*.h5
-
-# Datasets
-datasets/
+ai-service/outputs/**/*.pth

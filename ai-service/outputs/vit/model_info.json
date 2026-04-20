@@ -1,0 +1,5 @@
+{
+  "backbone": "vit_small_patch16_224",
+  "total_parameters": 22986628,
+  "trainable_parameters": 22986628
+}

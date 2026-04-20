@@ -278,7 +278,7 @@ def main():
         
         # Get model path from environment or use default
         model_path = os.environ.get('CUSTOM_MODEL_PATH', 
-                                   '../../ai-service/outputs/cnn_multi_attr_3/best_model.pth')
+                                   '../../ai-service/outputs/ava_finetuned_3/best_model.pth')
         
         # Make path absolute
         if not os.path.isabs(model_path):

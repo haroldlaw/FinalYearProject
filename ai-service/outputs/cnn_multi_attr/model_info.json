@@ -1,0 +1,5 @@
+{
+  "backbone": "resnet50",
+  "total_parameters": 28236868,
+  "trainable_parameters": 28236868
+}
