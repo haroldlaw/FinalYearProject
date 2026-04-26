@@ -1,4 +1,4 @@
-# Photography Aesthetic Evaluation System
+# AI Image Analyzer
 
 A full-stack web application that analyses the aesthetic quality of photographs using a custom deep learning model trained on the Aesthetic Attributes Database (AADB). Users can upload an image and receive a detailed, attribute-level quality assessment covering composition, colour, focus, and exposure.
 
@@ -192,6 +192,11 @@ The model predicts four aesthetic attributes independently and derives an overal
 | Colour | Colour Harmony, Vivid Colour |
 | Focus | Depth of Field |
 | Exposure | Lighting |
+
+---
+
+## Project Demo
+(https://youtu.be/F2vMDRK5gVc)
 
 ---
 
